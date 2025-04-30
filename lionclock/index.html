@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Clock</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="clock-container">
+        <div class="clock">
+            <img src="lionface.png" alt="Lion Head" class="lion-face">
+            <div class="hand hour-hand" id="hourHand">
+                <div class="hand-grabber hour-grabber"></div>
+            </div>
+            <div class="hand minute-hand" id="minuteHand">
+                <div class="hand-grabber"></div>
+            </div>
+            <div class="center-dot"></div>
+            <!-- Minute markers and numbers will be added dynamically by JavaScript -->
+        </div>
+    </div>
+
+    <div id="digital-clock-display">00:00</div>
+
+    <div id="quiz-container">
+        <div id="quiz-instructions">Click "Start Quiz" to begin!</div>
+        <button id="quiz-button">Start Quiz</button>
+        <div id="quiz-feedback"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

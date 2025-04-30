@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Quiz</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Spelling Quiz</h1>
+
+    <div class="difficulty-selector">
+        <div class="difficulty-row">
+            <label>
+                <input type="radio" name="difficulty" value="veryEasy"> Very Easy
+            </label>
+            <label>
+                <input type="radio" name="difficulty" value="easy"> Easy
+            </label>
+            <label>
+                <input type="radio" name="difficulty" value="medium" checked> Medium <!-- Default -->
+            </label>
+        </div>
+        <div class="difficulty-row">
+            <label>
+                <input type="radio" name="difficulty" value="hard"> Hard
+            </label>
+            <label>
+                <input type="radio" name="difficulty" value="veryHard"> Very Hard
+            </label>
+        </div>
+    </div>
+
+    <div class="quiz-area">
+        <button id="hear-word-button">🔊 Hear Word Again</button>
+        <input type="text" id="spelling-input" placeholder="Type the word here...">
+        <button id="check-button">Check Spelling</button>
+        <p id="feedback"></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

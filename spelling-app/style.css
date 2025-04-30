@@ -1,0 +1,109 @@
+body {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'cursive', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #add8e6; /* Light Blue Sky */
+    color: #333;
+    margin: 0;
+    /* Optional: Add a subtle honeycomb background */
+    background-image: url('honeycomb.jpg');
+    /* background-repeat: repeat; */
+}
+
+h1 {
+    color: #4a2c0f; /* Dark Brown */
+    text-shadow: 1px 1px #eee;
+    margin-bottom: 10px; /* Reduced margin */
+    /* Optional: Add a bee image next to title - requires HTML change */
+    /* display: flex; align-items: center; gap: 10px; */
+}
+
+.difficulty-selector {
+    margin-bottom: 15px; /* Adjusted margin */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background-color: rgba(255, 235, 59, 0.8); /* Bright Yellow with 80% opacity */
+    padding: 15px 25px;
+    border-radius: 15px;
+    border: 3px solid #000000; /* Black border */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.difficulty-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+}
+
+.difficulty-selector label {
+    cursor: pointer;
+    font-size: 1.1em;
+    color: #333; /* Ensure text is readable on yellow */
+}
+
+.quiz-area {
+    background-color: #ffeb3b; /* Bright Yellow */
+    padding: 30px;
+    border-radius: 15px;
+    border: 3px solid #000000; /* Black border */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+button {
+    padding: 12px 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    border: 2px solid #000000; /* Black border */
+    border-radius: 8px;
+    color: #000000; /* Black text */
+    background-color: #ffc107; /* Amber/Orange */
+    transition: background-color 0.2s ease;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #ffa000; /* Darker Amber/Orange */
+}
+
+#hear-word-button {
+    background-color: #ffc107; /* Amber/Orange */
+}
+
+#hear-word-button:hover {
+    background-color: #ffa000;
+}
+
+input[type="text"] {
+    padding: 10px;
+    font-size: 1.2em;
+    border: 3px solid #000000; /* Black border */
+    border-radius: 5px;
+    width: 250px;
+    text-align: center;
+    background-color: #fffde7; /* Light yellow input bg */
+}
+
+#feedback {
+    font-size: 1.2em;
+    font-weight: bold;
+    min-height: 1.5em;
+    margin-top: 10px;
+}
+
+#feedback.correct {
+    color: #388e3c; /* Darker Green */
+}
+
+#feedback.incorrect {
+    color: #d32f2f; /* Darker Red */
+} 
