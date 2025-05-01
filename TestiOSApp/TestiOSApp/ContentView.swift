@@ -10,12 +10,13 @@ import MapKit
 import CoreLocation
 import Foundation
 import XMLCoder
+import WebKit
 
 struct POI: Equatable {
     let coordinate: CLLocationCoordinate2D
     let title: String
     let description: String
-    let category: String
+    let categories: [String]
     let imageName: String? // Optional image name
     
     static func == (lhs: POI, rhs: POI) -> Bool {
@@ -23,35 +24,40 @@ struct POI: Equatable {
                lhs.coordinate.longitude == rhs.coordinate.longitude &&
                lhs.title == rhs.title &&
                lhs.description == rhs.description &&
-               lhs.category == rhs.category &&
+               lhs.categories == rhs.categories &&
                lhs.imageName == rhs.imageName
     }
 }
 
 // Add color mapping for categories
 extension POI {
-    var color: UIColor {
-        switch category.lowercased() {
+    var color: Color {
+        // Use the first category for color
+        guard let firstCategory = categories.first?.lowercased() else {
+            return .pink
+        }
+        
+        switch firstCategory {
         case "museum":
-            return .systemPurple
+            return .purple
         case "park":
-            return .systemGreen
+            return .green
         case "historic":
-            return .systemBrown
+            return .brown
         case "shopping":
-            return .systemBlue
+            return .blue
         case "restaurant":
-            return .systemRed
+            return .red
         case "entertainment":
-            return .systemOrange
+            return .orange
         case "transport":
-            return .systemGray
+            return .gray
         case "education":
-            return .systemIndigo
+            return .indigo
         case "sports":
-            return .systemTeal
+            return .teal
         default:
-            return .systemPink
+            return .pink
         }
     }
 }
@@ -94,6 +100,176 @@ struct Route: Codable {
     let duration: String
 }
 
+struct POIPopupView: View {
+    let poi: POI
+    let onClose: () -> Void
+    
+    var body: some View {
+        VStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(poi.title)
+                        .font(.title)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top)
+                    
+                    if let imageName = poi.imageName, !imageName.isEmpty {
+                        Image(imageName)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200)
+                            .clipped()
+                            .cornerRadius(10)
+                    }
+                    
+                    Text(poi.description)
+                        .font(.body)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Text("Categories: \(poi.categories.joined(separator: ", "))")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+            }
+            
+            Button("Close") {
+                onClose()
+            }
+            .padding()
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(20)
+        .shadow(radius: 10)
+        .padding()
+    }
+}
+
+struct POIDetailView: View {
+    let poi: POI
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Title
+                    Text(poi.title)
+                        .font(.title)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top)
+                    
+                    // Image if available
+                    if let imageName = poi.imageName, !imageName.isEmpty {
+                        if let image = UIImage(named: imageName) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 200)
+                                .cornerRadius(10)
+                                .padding(.horizontal)
+                        } else {
+                            Text("Image not found: \(imageName)")
+                                .foregroundColor(.red)
+                                .padding()
+                        }
+                    }
+                    
+                    // Description
+                    if poi.description.contains("<") && poi.description.contains(">") {
+                        HTMLTextView(html: poi.description)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 300)
+                    } else {
+                        Text(poi.description)
+                            .font(.body)
+                            .padding(.horizontal)
+                    }
+                    
+                    // Categories
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Categories")
+                            .font(.headline)
+                            .padding(.horizontal)
+                        
+                        FlowLayout(spacing: 8) {
+                            ForEach(poi.categories, id: \.self) { category in
+                                Text(category)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.blue.opacity(0.1))
+                                    .foregroundColor(.blue)
+                                    .cornerRadius(15)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.bottom)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Helper view for horizontal flow layout
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+        var lineWidth: CGFloat = 0
+        var lineHeight: CGFloat = 0
+        
+        for size in sizes {
+            if lineWidth + size.width > (proposal.width ?? .infinity) {
+                width = max(width, lineWidth - spacing)
+                height += lineHeight + spacing
+                lineWidth = size.width + spacing
+                lineHeight = size.height
+            } else {
+                lineWidth += size.width + spacing
+                lineHeight = max(lineHeight, size.height)
+            }
+        }
+        
+        width = max(width, lineWidth - spacing)
+        height += lineHeight
+        
+        return CGSize(width: width, height: height)
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        var x = bounds.minX
+        var y = bounds.minY
+        var lineHeight: CGFloat = 0
+        
+        for (index, size) in sizes.enumerated() {
+            if x + size.width > bounds.maxX {
+                x = bounds.minX
+                y += lineHeight + spacing
+                lineHeight = 0
+            }
+            
+            subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            lineHeight = max(lineHeight, size.height)
+        }
+    }
+}
+
 struct ContentView: View {
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 50.9097, longitude: -1.4044), // Southampton coordinates
@@ -104,41 +280,50 @@ struct ContentView: View {
     @State private var selectedPOI: POI? = nil
     @State private var showPOIPopup = false
     @State private var showPOIList = false
-    @State private var selectedCategory: String = "All"
+    @State private var selectedCategories: Set<String> = Set() // Track selected categories
     @State private var showCategoryPicker = false
     @State private var showRoutePicker = false
     @State private var selectedRoute: Route? = nil
     @State private var htmlAttributedString: AttributedString? = nil
+    @State private var selectedCategory: String = "All"  // Initialize with "All"
 
     let pois = loadPOIsFromCSV()
     let routes = loadRoutesFromCSV()
     
     var categories: [String] {
-        let allCategories = Set(pois.map { $0.category })
-        return ["All"] + allCategories.sorted()
+        let allCategories = Set(pois.flatMap { $0.categories })
+        return allCategories.sorted()
     }
     
     var filteredPOIs: [POI] {
-        if selectedCategory == "All" {
-            return pois
+        if selectedCategories.isEmpty {
+            return [] // Return empty array when no categories are selected
         } else {
-            return pois.filter { $0.category == selectedCategory }
+            return pois.filter { poi in
+                !Set(poi.categories).isDisjoint(with: selectedCategories)
+            }
         }
     }
 
     var body: some View {
         ZStack {
-            MapView(region: $region, mapType: $mapType, selectedRoute: $selectedRoute, pois: filteredPOIs, onPOITap: { poi in
+            MapView(region: $region, 
+                   mapType: $mapType, 
+                   selectedRoute: $selectedRoute, 
+                   pois: pois,  // Full list for lookups
+                   filteredPOIs: filteredPOIs) { poi in  // Filtered list for display
                 selectedPOI = poi
                 showPOIPopup = true
-            })
-            .edgesIgnoringSafeArea(.horizontal)
-            .frame(maxHeight: .infinity)
-
+            }
+            .edgesIgnoringSafeArea(.all)
+            
+            // Control buttons layer
             VStack {
                 HStack {
                     Button(action: {
-                        showCategoryPicker.toggle()
+                        withAnimation {
+                            showCategoryPicker.toggle()
+                        }
                     }) {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                             .font(.title)
@@ -152,7 +337,9 @@ struct ContentView: View {
                     Spacer()
                     
                     Button(action: {
-                        showPOIList.toggle()
+                        withAnimation {
+                            showPOIList.toggle()
+                        }
                     }) {
                         Image(systemName: "list.bullet")
                             .font(.title)
@@ -167,7 +354,9 @@ struct ContentView: View {
                 
                 HStack {
                     Button(action: {
-                        showRoutePicker.toggle()
+                        withAnimation {
+                            showRoutePicker.toggle()
+                        }
                     }) {
                         Image(systemName: "figure.walk")
                             .font(.title)
@@ -182,193 +371,57 @@ struct ContentView: View {
                 }
                 .padding(.bottom, 8)
             }
-        }
-        .overlay(
-            Group {
-                if showCategoryPicker {
-                    VStack {
-                        Text("Filter by Category")
-                            .font(.title2)
-                            .padding()
-                        
-                        Picker("Category", selection: $selectedCategory) {
-                            ForEach(categories, id: \.self) { category in
-                                Text(category).tag(category)
-                            }
-                        }
-                        .pickerStyle(WheelPickerStyle())
-                        .frame(height: 150)
-                        
-                        HStack {
-                            Button("Cancel") {
-                                showCategoryPicker = false
-                            }
-                            .padding()
-                            
-                            Button("Apply") {
-                                showCategoryPicker = false
-                            }
-                            .padding()
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(20)
-                    .shadow(radius: 10)
-                    .padding()
-                    .transition(.move(edge: .bottom))
-                }
-                
-                if showRoutePicker {
-                    VStack {
-                        Text("Select Walking Route")
-                            .font(.title)
-                            .padding()
-                        
-                        List(routes, id: \.name) { route in
-                            Button(action: {
-                                selectedRoute = route
-                                showRoutePicker = false
-                            }) {
-                                VStack(alignment: .leading) {
-                                    Text(route.name)
-                                        .font(.headline)
-                                    Text(route.description)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    HStack {
-                                        Text("\(String(format: "%.1f", route.distance)) km")
-                                        Text("•")
-                                        Text(route.duration)
-                                    }
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .listStyle(PlainListStyle())
-                        
-                        Button(action: {
-                            print("No Route selected - removing current route")
-                            selectedRoute = nil
-                            showRoutePicker = false
-                        }) {
-                            HStack {
-                                Image(systemName: "xmark.circle")
-                                Text("No Route")
-                            }
-                            .foregroundColor(.red)
-                        }
-                        .padding()
-                        
-                        Button("Cancel") {
-                            showRoutePicker = false
-                        }
-                        .padding()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(20)
-                    .shadow(radius: 10)
-                    .padding()
-                    .transition(.move(edge: .trailing))
-                }
-                
-                if showPOIList {
-                    VStack {
-                        Text("Points of Interest")
-                            .font(.title)
-                            .padding()
-                        
-                        Picker("Category", selection: $selectedCategory) {
-                            ForEach(categories, id: \.self) { category in
-                                Text(category).tag(category)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .padding(.horizontal)
-                        
-                        List(filteredPOIs, id: \.title) { poi in
-                            Button(action: {
-                                // Center map on selected POI
-                                withAnimation {
-                                    region = MKCoordinateRegion(
-                                        center: poi.coordinate,
-                                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                                    )
-                                    showPOIList = false
-                                }
-                            }) {
-                                VStack(alignment: .leading) {
-                                    Text(poi.title)
-                                        .font(.headline)
-                                    Text(poi.category)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .listStyle(PlainListStyle())
-                        
-                        Button("Close") {
+            
+            // Overlay views
+            if showCategoryPicker {
+                CategoryPickerView(
+                    categories: categories,
+                    selectedCategories: $selectedCategories,
+                    isPresented: $showCategoryPicker
+                )
+            }
+            
+            if showPOIList {
+                POIListView(
+                    pois: filteredPOIs,
+                    selectedCategory: $selectedCategory,
+                    categories: categories,
+                    onPOISelected: { poi in
+                        withAnimation {
+                            region = MKCoordinateRegion(
+                                center: poi.coordinate,
+                                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                            )
                             showPOIList = false
                         }
-                        .padding()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(20)
-                    .shadow(radius: 10)
-                    .padding()
-                    .transition(.move(edge: .trailing))
-                }
-                
-                if showPOIPopup, let poi = selectedPOI {
-                    VStack {
-                        Spacer()
-                        ScrollView {
-                            VStack(spacing: 16) {
-                                Text(poi.title)
-                                    .font(.title)
-                                    .bold()
-                                
-                                if let imageName = poi.imageName,
-                                   let image = UIImage(named: imageName) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(maxHeight: 200)
-                                        .cornerRadius(10)
-                                }
-                                
-                                HTMLTextView(html: poi.description)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 4)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                
-                                Text("Category: \(poi.category)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Button("Close") {
-                                    showPOIPopup = false
-                                    selectedPOI = nil
-                                }
-                                .padding(.top)
-                            }
-                            .padding()
-                            .frame(maxWidth: UIScreen.main.bounds.width - 40)
-                            .background(Color(.systemBackground))
-                            .cornerRadius(20)
-                            .shadow(radius: 10)
-                            .padding()
-                        }
-                        Spacer()
-                    }
-                    .background(Color.black.opacity(0.4).ignoresSafeArea())
-                    .transition(.move(edge: .bottom))
-                }
+                    },
+                    isPresented: $showPOIList
+                )
             }
-        )
+            
+            if showRoutePicker {
+                RoutePickerView(
+                    routes: routes,
+                    selectedRoute: $selectedRoute,
+                    isPresented: $showRoutePicker
+                )
+            }
+            
+            if showPOIPopup, let poi = selectedPOI {
+                POIDetailView(poi: poi)
+                    .onDisappear {
+                        selectedPOI = nil
+                        showPOIPopup = false
+                    }
+            }
+        }
+        .fullScreenCover(isPresented: $showPOIPopup, onDismiss: {
+            selectedPOI = nil
+        }) {
+            if let poi = selectedPOI {
+                POIDetailView(poi: poi)
+            }
+        }
     }
 }
 
@@ -376,233 +429,187 @@ struct MapView: UIViewRepresentable {
     @Binding var region: MKCoordinateRegion
     @Binding var mapType: MKMapType
     @Binding var selectedRoute: Route?
-    var pois: [POI]
-    var onPOITap: (POI) -> Void
-    
-    // Add reference to the map view
-    @State private var mapView: MKMapView?
-    @State private var routeOverlay: MKPolyline?
+    let pois: [POI]  // Full list of POIs for lookups
+    let filteredPOIs: [POI]  // Filtered list for display
+    let onPOITap: (POI) -> Void
     
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
-        self.mapView = mapView // Store reference
         mapView.delegate = context.coordinator
+        
+        // Configure map view for interaction
+        mapView.isZoomEnabled = true
+        mapView.isScrollEnabled = true
+        mapView.isUserInteractionEnabled = true
+        
+        // Enable user location and heading
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .followWithHeading
         
-        // Set up offline tile overlay first
-        let overlay = OfflineTileOverlay()
-        overlay.canReplaceMapContent = true
-        mapView.addOverlay(overlay, level: .aboveLabels)
+        // Add offline tile overlay
+        let offlineOverlay = OfflineTileOverlay()
+        offlineOverlay.canReplaceMapContent = true
+        mapView.addOverlay(offlineOverlay, level: .aboveLabels)
         
         return mapView
     }
     
-    func updateUIView(_ mapView: MKMapView, context: Context) {
-        self.mapView = mapView // Update reference
-        mapView.setRegion(region, animated: true)
-        mapView.mapType = mapType
-
-        // Remove old POI annotations (but not user location)
-        let nonUserAnnotations = mapView.annotations.filter { !($0 is MKUserLocation) }
-        mapView.removeAnnotations(nonUserAnnotations)
-
-        // Add POI annotations
-        for poi in pois {
+    func updateUIView(_ view: MKMapView, context: Context) {
+        view.mapType = mapType
+        
+        // Update POI annotations using filteredPOIs
+        view.removeAnnotations(view.annotations.filter { $0 is MKPointAnnotation })
+        let annotations = filteredPOIs.map { poi -> MKPointAnnotation in
             let annotation = MKPointAnnotation()
-            annotation.title = poi.title
             annotation.coordinate = poi.coordinate
-            mapView.addAnnotation(annotation)
+            annotation.title = poi.title
+            return annotation
         }
+        view.addAnnotations(annotations)
         
-        // Update route overlay if route selection changed
+        // Update route overlay if selected
+        view.removeOverlays(view.overlays.filter { $0 is MKPolyline })
         if let route = selectedRoute {
-            print("Loading route: \(route.name)")
-            loadAndDisplayRoute(route, on: mapView)
-        } else {
-            print("Removing route overlay - selectedRoute: nil")
-            // Remove all overlays except the tile overlay
-            let overlays = mapView.overlays
-            for overlay in overlays {
-                if !(overlay is MKTileOverlay) {
-                    print("Removing overlay: \(overlay)")
-                    mapView.removeOverlay(overlay)
-                }
-            }
-            routeOverlay = nil
-        }
-    }
-    
-    private func loadAndDisplayRoute(_ route: Route, on mapView: MKMapView) {
-        print("Starting to load route: \(route.name)")
-        
-        // Remove all overlays except the tile overlay
-        let overlays = mapView.overlays
-        for overlay in overlays {
-            if !(overlay is MKTileOverlay) {
-                print("Removing previous overlay: \(overlay)")
-                mapView.removeOverlay(overlay)
-            }
-        }
-        routeOverlay = nil
-        
-        // Remove any existing route markers
-        let routeMarkers = mapView.annotations.filter { $0 is MKPointAnnotation && $0.title == "Start" }
-        mapView.removeAnnotations(routeMarkers)
-        
-        if let gpxPath = Bundle.main.path(forResource: route.gpxFileName, ofType: "gpx") {
-            print("Found GPX file at: \(gpxPath)")
-            if let gpxData = try? Data(contentsOf: URL(fileURLWithPath: gpxPath)) {
-                do {
-                    let decoder = XMLDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-                    
-                    let gpx = try decoder.decode(GPX.self, from: gpxData)
-                    print("Successfully decoded GPX with \(gpx.track.points.count) points")
-                    
-                    let coordinates = gpx.track.points.compactMap { point -> CLLocationCoordinate2D? in
-                        guard let lat = Double(point.lat),
-                              let lon = Double(point.lon) else {
-                            print("Failed to convert coordinates: lat=\(point.lat), lon=\(point.lon)")
-                            return nil
-                        }
-                        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                    }
-                    
-                    if coordinates.isEmpty {
-                        print("No valid coordinates found after conversion")
-                    } else {
-                        print("Successfully converted \(coordinates.count) coordinates")
-                        
-                        // Add start marker at first coordinate
-                        if let firstCoordinate = coordinates.first {
-                            let startMarker = MKPointAnnotation()
-                            startMarker.title = "Start"
-                            startMarker.coordinate = firstCoordinate
-                            mapView.addAnnotation(startMarker)
-                            print("Added start marker at first coordinate")
-                        }
-                        
-                        let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
-                        routeOverlay = polyline
-                        mapView.addOverlay(polyline, level: .aboveLabels)
-                        print("Added polyline overlay with \(coordinates.count) points")
-                        
-                        // Zoom to show the entire route
-                        var region = MKCoordinateRegion()
-                        var topLeftCoord = CLLocationCoordinate2D(latitude: -90, longitude: 180)
-                        var bottomRightCoord = CLLocationCoordinate2D(latitude: 90, longitude: -180)
-                        
-                        for coordinate in coordinates {
-                            topLeftCoord.longitude = min(topLeftCoord.longitude, coordinate.longitude)
-                            topLeftCoord.latitude = max(topLeftCoord.latitude, coordinate.latitude)
-                            bottomRightCoord.longitude = max(bottomRightCoord.longitude, coordinate.longitude)
-                            bottomRightCoord.latitude = min(bottomRightCoord.latitude, coordinate.latitude)
-                        }
-                        
-                        let center = CLLocationCoordinate2D(
-                            latitude: topLeftCoord.latitude - (topLeftCoord.latitude - bottomRightCoord.latitude) * 0.5,
-                            longitude: topLeftCoord.longitude + (bottomRightCoord.longitude - topLeftCoord.longitude) * 0.5
-                        )
-                        
-                        let span = MKCoordinateSpan(
-                            latitudeDelta: abs(topLeftCoord.latitude - bottomRightCoord.latitude) * 1.3,
-                            longitudeDelta: abs(bottomRightCoord.longitude - topLeftCoord.longitude) * 1.3
-                        )
-                        
-                        region = MKCoordinateRegion(center: center, span: span)
-                        mapView.setRegion(region, animated: true)
-                    }
-                } catch {
-                    print("Error decoding GPX: \(error)")
-                }
-            } else {
-                print("Failed to load GPX data")
-            }
-        } else {
-            print("Could not find GPX file in bundle")
+            loadAndDisplayRoute(route, on: view)
         }
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(self, pois: pois, onPOITap: onPOITap)
+        Coordinator(self)
     }
     
     class Coordinator: NSObject, MKMapViewDelegate, CLLocationManagerDelegate {
         var parent: MapView
-        let locationManager = CLLocationManager()
-        let pois: [POI]
-        let onPOITap: (POI) -> Void
+        private let locationManager = CLLocationManager()
         
-        init(_ parent: MapView, pois: [POI], onPOITap: @escaping (POI) -> Void) {
+        init(_ parent: MapView) {
             self.parent = parent
-            self.pois = pois
-            self.onPOITap = onPOITap
             super.init()
+            
+            // Request location and heading permissions
             locationManager.delegate = self
             locationManager.requestWhenInUseAuthorization()
             locationManager.startUpdatingLocation()
             locationManager.startUpdatingHeading()
         }
         
-        func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-            // Update map view with new heading
-            if let mapView = parent.mapView {
-                mapView.userTrackingMode = .followWithHeading
+        func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+            switch status {
+            case .authorizedWhenInUse, .authorizedAlways:
+                manager.startUpdatingLocation()
+                manager.startUpdatingHeading()
+            default:
+                break
             }
-        }
-        
-        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-            if let tileOverlay = overlay as? MKTileOverlay {
-                return MKTileOverlayRenderer(tileOverlay: tileOverlay)
-            }
-            
-            if let polyline = overlay as? MKPolyline {
-                let renderer = MKPolylineRenderer(polyline: polyline)
-                renderer.strokeColor = .systemBlue
-                renderer.lineWidth = 3
-                return renderer
-            }
-            
-            return MKOverlayRenderer(overlay: overlay)
         }
         
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-            guard !(annotation is MKUserLocation) else { return nil }
+            guard let annotation = annotation as? MKPointAnnotation else { return nil }
             
-            let identifier = "Pin"
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
+            let identifier = "POIAnnotation"
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+            
             if annotationView == nil {
                 annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
                 annotationView?.canShowCallout = true
+                
+                // Add detail disclosure button
+                let button = UIButton(type: .detailDisclosure)
+                annotationView?.rightCalloutAccessoryView = button
             } else {
                 annotationView?.annotation = annotation
             }
             
-            // Customize the marker for the start point
-            if annotation.title == "Start" {
-                annotationView?.markerTintColor = .systemGreen
-                annotationView?.glyphText = "S"
-                annotationView?.glyphTintColor = .white
-            } else if let title = annotation.title ?? "",
-                      let poi = pois.first(where: { $0.title == title }) {
-                annotationView?.markerTintColor = poi.color
-                annotationView?.glyphTintColor = .white
+            // Set marker color based on the POI's first category
+            if let markerView = annotationView as? MKMarkerAnnotationView {
+                // Find the POI in the full pois array to get its color
+                if let poi = parent.pois.first(where: { 
+                    $0.title == annotation.title && 
+                    $0.coordinate.latitude == annotation.coordinate.latitude &&
+                    $0.coordinate.longitude == annotation.coordinate.longitude
+                }) {
+                    markerView.markerTintColor = UIColor(poi.color)
+                }
             }
             
             return annotationView
         }
         
-        func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {
-            print("Map finished loading - tiles are cached for offline use")
+        func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+            print("Callout accessory tapped")
+            guard let annotation = view.annotation as? MKPointAnnotation else {
+                print("Failed to get annotation")
+                return
+            }
+            
+            // Find the POI in the full pois array
+            guard let poi = parent.pois.first(where: { 
+                $0.title == annotation.title && 
+                $0.coordinate.latitude == annotation.coordinate.latitude &&
+                $0.coordinate.longitude == annotation.coordinate.longitude
+            }) else {
+                print("Failed to find POI for annotation: \(annotation.title ?? "unknown")")
+                print("Available POIs:")
+                parent.pois.forEach { poi in
+                    print("- \(poi.title) at (\(poi.coordinate.latitude), \(poi.coordinate.longitude))")
+                }
+                return
+            }
+            
+            print("Found POI: \(poi.title)")
+            // Call the callback on the main thread
+            DispatchQueue.main.async {
+                print("Calling onPOITap callback")
+                self.parent.onPOITap(poi)
+            }
         }
         
-        func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-            guard let annotation = view.annotation else { return }
-            // Find the POI that matches this annotation
-            if let poi = pois.first(where: { $0.title == annotation.title && $0.coordinate.latitude == annotation.coordinate.latitude && $0.coordinate.longitude == annotation.coordinate.longitude }) {
-                onPOITap(poi)
+        func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+            // Only show the callout, don't trigger the detail view
+            print("Annotation selected - showing callout")
+        }
+        
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            if overlay is MKTileOverlay {
+                return MKTileOverlayRenderer(overlay: overlay)
+            } else if let polyline = overlay as? MKPolyline {
+                let renderer = MKPolylineRenderer(polyline: polyline)
+                renderer.strokeColor = .blue
+                renderer.lineWidth = 3
+                return renderer
             }
+            return MKOverlayRenderer(overlay: overlay)
+        }
+    }
+    
+    private func loadAndDisplayRoute(_ route: Route, on mapView: MKMapView) {
+        guard let gpxPath = Bundle.main.path(forResource: route.gpxFileName, ofType: "gpx"),
+              let gpxData = try? Data(contentsOf: URL(fileURLWithPath: gpxPath)) else {
+            print("Failed to load GPX file: \(route.gpxFileName)")
+            return
+        }
+        
+        do {
+            let decoder = XMLDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            let gpx = try decoder.decode(GPX.self, from: gpxData)
+            
+            let coordinates = gpx.track.points.compactMap { point -> CLLocationCoordinate2D? in
+                guard let lat = Double(point.lat),
+                      let lon = Double(point.lon) else { return nil }
+                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            }
+            
+            if !coordinates.isEmpty {
+                let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
+                mapView.addOverlay(polyline, level: .aboveLabels)
+                
+                // Optionally zoom to show the entire route
+                let region = MKCoordinateRegion(polyline.boundingMapRect)
+                mapView.setRegion(region, animated: true)
+            }
+        } catch {
+            print("Failed to decode GPX: \(error)")
         }
     }
 }
@@ -614,14 +621,26 @@ class OfflineTileOverlay: MKTileOverlay {
             result(tileData, nil)
             return
         }
+        
+        // If not found, return nil to use the default map
+        result(nil, nil)
     }
     
     private func loadTileDataFromDisk(x: Int, y: Int, z: Int) -> Data? {
         // Try to load from app bundle (blue folder reference)
-
-        if let bundlePath = Bundle.main.path(forResource: "\(z)-\(x)-\(y)", ofType: "png") {
-            print("Loading tile from bundle: z:\(z) x:\(x) y:\(y)")
+        let tileName = "\(z)-\(x)-\(y).png"
+        if let bundlePath = Bundle.main.path(forResource: tileName, ofType: nil) {
+            print("Loading tile from bundle: \(tileName)")
             return try? Data(contentsOf: URL(fileURLWithPath: bundlePath))
+        }
+        
+        // Try to load from documents directory
+        if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let tilePath = documentsDirectory.appendingPathComponent("map_tiles").appendingPathComponent(tileName)
+            if let data = try? Data(contentsOf: tilePath) {
+                print("Loading tile from documents: \(tileName)")
+                return data
+            }
         }
         
         return nil
@@ -724,13 +743,14 @@ func loadPOIsFromCSV() -> [POI] {
            let lon = Double(fields[1]) {
             let title = fields[2]
             let description = fields[3]
-            let category = fields[4]
+            // Split categories by semicolon and trim whitespace
+            let categories = fields[4].components(separatedBy: ";").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             let imageName = fields.count > 5 ? fields[5] : nil // Optional 6th field for image name
             let poi = POI(
                 coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
                 title: title,
                 description: description,
-                category: category,
+                categories: categories,
                 imageName: imageName
             )
             pois.append(poi)
@@ -771,41 +791,230 @@ func loadRoutesFromCSV() -> [Route] {
 struct HTMLTextView: UIViewRepresentable {
     let html: String
     
-    func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
-        textView.isEditable = false
-        textView.isScrollEnabled = false
-        textView.backgroundColor = .clear
-        textView.textContainer.lineFragmentPadding = 0
-        textView.textContainerInset = .zero
-        textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        textView.setContentHuggingPriority(.defaultHigh, for: .vertical)
-        textView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        return textView
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.isScrollEnabled = true
+        webView.scrollView.bounces = false
+        return webView
     }
     
-    func updateUIView(_ uiView: UITextView, context: Context) {
-        if let data = html.data(using: .utf8),
-           let attributedString = try? NSAttributedString(
-            data: data,
-            options: [.documentType: NSAttributedString.DocumentType.html],
-            documentAttributes: nil
-           ) {
-            uiView.attributedText = attributedString
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        let htmlWithStyle = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {
+                        font-family: -apple-system;
+                        font-size: 17px;
+                        color: #000000;
+                        line-height: 1.5;
+                        margin: 0;
+                        padding: 0;
+                        background-color: transparent;
+                    }
+                    img {
+                        max-width: 100%;
+                        height: auto;
+                    }
+                </style>
+            </head>
+            <body>
+                \(html)
+            </body>
+            </html>
+        """
+        
+        // Use a local base URL to prevent network requests
+        let baseURL = URL(string: "about:blank")
+        uiView.loadHTMLString(htmlWithStyle, baseURL: baseURL)
+    }
+}
 
-            // Force layout update
-            uiView.layoutManager.ensureLayout(for: uiView.textContainer)
-            let size = uiView.sizeThatFits(CGSize(width: uiView.frame.width, height: .greatestFiniteMagnitude))
-            uiView.frame.size = size
+struct CategoryPickerView: View {
+    let categories: [String]
+    @Binding var selectedCategories: Set<String>
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        VStack {
+            Text("Filter Points of Interest")
+                .font(.title2)
+                .padding()
+            
+            ScrollView {
+                VStack(spacing: 12) {
+                    ForEach(categories, id: \.self) { category in
+                        HStack {
+                            Text(category)
+                                .font(.body)
+                            Spacer()
+                            Toggle("", isOn: Binding(
+                                get: { selectedCategories.contains(category) },
+                                set: { isOn in
+                                    if isOn {
+                                        selectedCategories.insert(category)
+                                    } else {
+                                        selectedCategories.remove(category)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
+                    }
+                }
+                .padding()
+            }
+            
+            HStack {
+                Button("Clear All") {
+                    selectedCategories.removeAll()
+                }
+                .padding()
+                
+                Button("Close") {
+                    isPresented = false
+                }
+                .padding()
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color(.systemBackground))
+        .cornerRadius(20)
+        .shadow(radius: 10)
+        .padding()
+        .transition(.move(edge: .bottom))
+    }
+}
+
+struct POIListView: View {
+    let pois: [POI]
+    @Binding var selectedCategory: String
+    let categories: [String]
+    let onPOISelected: (POI) -> Void
+    @Binding var isPresented: Bool
+    
+    var filteredPOIs: [POI] {
+        if selectedCategory == "All" {
+            return pois
         } else {
-            uiView.text = html
+            return pois.filter { $0.categories.contains(selectedCategory) }
         }
     }
     
-    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
-        let width = proposal.width ?? .infinity
-        let size = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
-        return size
+    var body: some View {
+        VStack {
+            Text("Points of Interest")
+                .font(.title)
+                .padding()
+            
+            Picker("Category", selection: $selectedCategory) {
+                Text("All").tag("All")
+                ForEach(categories, id: \.self) { category in
+                    Text(category).tag(category)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .padding(.horizontal)
+            
+            List(filteredPOIs, id: \.title) { poi in
+                Button(action: {
+                    onPOISelected(poi)
+                }) {
+                    VStack(alignment: .leading) {
+                        Text(poi.title)
+                            .font(.headline)
+                        Text(poi.categories.joined(separator: ", "))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .listStyle(PlainListStyle())
+            
+            Button("Close") {
+                isPresented = false
+            }
+            .padding()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
+        .cornerRadius(20)
+        .shadow(radius: 10)
+        .padding()
+        .transition(.move(edge: .trailing))
+    }
+}
+
+struct RoutePickerView: View {
+    let routes: [Route]
+    @Binding var selectedRoute: Route?
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        VStack {
+            Text("Select Walking Route")
+                .font(.title)
+                .padding()
+            
+            List(routes, id: \.name) { route in
+                Button(action: {
+                    selectedRoute = route
+                    isPresented = false
+                }) {
+                    VStack(alignment: .leading) {
+                        Text(route.name)
+                            .font(.headline)
+                        Text(route.description)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        HStack {
+                            Text("\(String(format: "%.1f", route.distance)) km")
+                            Text("•")
+                            Text(route.duration)
+                        }
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .listStyle(PlainListStyle())
+            
+            Button(action: {
+                print("No Route selected - removing current route")
+                selectedRoute = nil
+                isPresented = false
+            }) {
+                HStack {
+                    Image(systemName: "xmark.circle")
+                    Text("No Route")
+                }
+                .foregroundColor(.red)
+            }
+            .padding()
+            
+            Button("Cancel") {
+                isPresented = false
+            }
+            .padding()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
+        .cornerRadius(20)
+        .shadow(radius: 10)
+        .padding()
+        .transition(.move(edge: .trailing))
     }
 }
 
