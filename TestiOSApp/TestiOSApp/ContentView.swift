@@ -425,6 +425,44 @@ struct ContentView: View {
     }
 }
 
+class OfflineTileOverlay: MKTileOverlay {
+    init() {
+        super.init(urlTemplate: nil)
+        self.canReplaceMapContent = true
+    }
+    
+    override func loadTile(at path: MKTileOverlayPath, result: @escaping (Data?, Error?) -> Void) {
+        // First try to load from disk
+        if let tileData = loadTileDataFromDisk(x: path.x, y: path.y, z: path.z) {
+            result(tileData, nil)
+            return
+        }
+        
+        // If not found, return empty data instead of nil to prevent fallback to Apple Maps
+        result(Data(), nil)
+    }
+    
+    private func loadTileDataFromDisk(x: Int, y: Int, z: Int) -> Data? {
+        // Try to load from app bundle (blue folder reference)
+        let tileName = "\(z)-\(x)-\(y).png"
+        if let bundlePath = Bundle.main.path(forResource: tileName, ofType: nil) {
+            print("Loading tile from bundle: \(tileName)")
+            return try? Data(contentsOf: URL(fileURLWithPath: bundlePath))
+        }
+        
+        // Try to load from documents directory
+        if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let tilePath = documentsDirectory.appendingPathComponent("map_tiles").appendingPathComponent(tileName)
+            if let data = try? Data(contentsOf: tilePath) {
+                print("Loading tile from documents: \(tileName)")
+                return data
+            }
+        }
+        
+        return nil
+    }
+}
+
 struct MapView: UIViewRepresentable {
     @Binding var region: MKCoordinateRegion
     @Binding var mapType: MKMapType
@@ -448,8 +486,10 @@ struct MapView: UIViewRepresentable {
         
         // Add offline tile overlay
         let offlineOverlay = OfflineTileOverlay()
-        offlineOverlay.canReplaceMapContent = true
         mapView.addOverlay(offlineOverlay, level: .aboveLabels)
+        
+        // Set map type to satellite to hide default map labels
+        mapView.mapType = .satellite
         
         return mapView
     }
@@ -614,44 +654,10 @@ struct MapView: UIViewRepresentable {
     }
 }
 
-class OfflineTileOverlay: MKTileOverlay {
-    override func loadTile(at path: MKTileOverlayPath, result: @escaping (Data?, Error?) -> Void) {
-        // First try to load from disk
-        if let tileData = loadTileDataFromDisk(x: path.x, y: path.y, z: path.z) {
-            result(tileData, nil)
-            return
-        }
-        
-        // If not found, return nil to use the default map
-        result(nil, nil)
-    }
-    
-    private func loadTileDataFromDisk(x: Int, y: Int, z: Int) -> Data? {
-        // Try to load from app bundle (blue folder reference)
-        let tileName = "\(z)-\(x)-\(y).png"
-        if let bundlePath = Bundle.main.path(forResource: tileName, ofType: nil) {
-            print("Loading tile from bundle: \(tileName)")
-            return try? Data(contentsOf: URL(fileURLWithPath: bundlePath))
-        }
-        
-        // Try to load from documents directory
-        if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let tilePath = documentsDirectory.appendingPathComponent("map_tiles").appendingPathComponent(tileName)
-            if let data = try? Data(contentsOf: tilePath) {
-                print("Loading tile from documents: \(tileName)")
-                return data
-            }
-        }
-        
-        return nil
-    }
-}
-    
-
 func downloadVisibleTilesForRegion(_ region: MKCoordinateRegion) {
     // Southampton region
     let minZoom = 12
-    let maxZoom = 16
+    let maxZoom = 18
     
     // Create directory structure
     guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
