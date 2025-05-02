@@ -270,6 +270,26 @@ struct FlowLayout: Layout {
     }
 }
 
+// Add this class at the top of the file, before the ContentView struct
+class TileDownloadManager: ObservableObject {
+    @Published var isDownloading = false
+    
+    static func downloadTiles(for region: MKCoordinateRegion, completion: @escaping () -> Void) {
+        // Create a local copy of the region to avoid capturing self
+        let regionCopy = region
+        
+        // Perform download on background queue
+        DispatchQueue.global(qos: .userInitiated).async {
+            downloadVisibleTilesForRegion(regionCopy)
+            
+            // Call completion on main queue
+            DispatchQueue.main.async {
+                completion()
+            }
+        }
+    }
+}
+
 struct ContentView: View {
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 50.9097, longitude: -1.4044), // Southampton coordinates
@@ -285,10 +305,19 @@ struct ContentView: View {
     @State private var showRoutePicker = false
     @State private var selectedRoute: Route? = nil
     @State private var htmlAttributedString: AttributedString? = nil
-    @State private var selectedCategory: String = "All"  // Initialize with "All"
+    @State private var selectedCategory: String = "All"
+    @StateObject private var tileDownloadManager = TileDownloadManager()
 
     let pois = loadPOIsFromCSV()
     let routes = loadRoutesFromCSV()
+    
+    init() {
+        // Start downloading tiles asynchronously
+        tileDownloadManager.isDownloading = true
+        TileDownloadManager.downloadTiles(for: region) { [tileDownloadManager] in
+            tileDownloadManager.isDownloading = false
+        }
+    }
     
     var categories: [String] {
         let allCategories = Set(pois.flatMap { $0.categories })
@@ -324,6 +353,17 @@ struct ContentView: View {
                 showPOIPopup = true
             }
             .edgesIgnoringSafeArea(.all)
+            
+            // Show loading indicator while downloading tiles
+            if tileDownloadManager.isDownloading {
+                VStack {
+                    ProgressView("Downloading map tiles...")
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 5)
+                }
+            }
             
             // Control buttons layer
             VStack {
@@ -387,8 +427,9 @@ struct ContentView: View {
                     selectedCategories: $selectedCategories,
                     isPresented: $showCategoryPicker
                 )
+                .transition(.move(edge: .bottom))
             }
-            
+
             if showPOIList {
                 POIListView(
                     pois: filteredPOIs,
@@ -415,7 +456,7 @@ struct ContentView: View {
                     isPresented: $showRoutePicker
                 )
             }
-            
+
             if showPOIPopup, let poi = selectedPOI {
                 POIDetailView(poi: poi)
                     .onDisappear {
@@ -480,6 +521,22 @@ struct MapView: UIViewRepresentable {
     let filteredPOIs: [POI]  // Filtered list for display
     let onPOITap: (POI) -> Void
     
+    // Add zoom level constraints
+    private let minZoomLevel: Double = 12  // Maximum zoom out
+    private let maxZoomLevel: Double = 18 // Maximum zoom in
+    private let minLatitudeDelta: CLLocationDegrees = 0.003   // Most zoomed in
+    private let maxLatitudeDelta: CLLocationDegrees = 0.1     // Most zoomed out
+    
+    // Add map bounds
+    private let minLatitude: CLLocationDegrees = 50.8  // Southampton area bounds
+    private let maxLatitude: CLLocationDegrees = 51.0
+    private let minLongitude: CLLocationDegrees = -1.5
+    private let maxLongitude: CLLocationDegrees = -1.3
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
@@ -504,13 +561,15 @@ struct MapView: UIViewRepresentable {
     }
     
     func updateUIView(_ view: MKMapView, context: Context) {
-        // Update region if it has changed
-        if view.region.center.latitude != region.center.latitude ||
-           view.region.center.longitude != region.center.longitude ||
-           view.region.span.latitudeDelta != region.span.latitudeDelta ||
-           view.region.span.longitudeDelta != region.span.longitudeDelta {
-            print("Updating map region to: \(region.center.latitude), \(region.center.longitude)")
-            view.setRegion(region, animated: true)
+        var clampedRegion = region
+        clampedRegion.span.latitudeDelta = max(minLatitudeDelta, min(maxLatitudeDelta, clampedRegion.span.latitudeDelta))
+        clampedRegion.span.longitudeDelta = max(minLatitudeDelta, min(maxLatitudeDelta, clampedRegion.span.longitudeDelta))
+
+        if view.region.center.latitude != clampedRegion.center.latitude ||
+            view.region.center.longitude != clampedRegion.center.longitude ||
+            view.region.span.latitudeDelta != clampedRegion.span.latitudeDelta ||
+            view.region.span.longitudeDelta != clampedRegion.span.longitudeDelta {
+            view.setRegion(clampedRegion, animated: true)
         }
         
         view.mapType = mapType
@@ -532,10 +591,6 @@ struct MapView: UIViewRepresentable {
         }
     }
     
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
     class Coordinator: NSObject, MKMapViewDelegate, CLLocationManagerDelegate {
         var parent: MapView
         private let locationManager = CLLocationManager()
@@ -549,6 +604,46 @@ struct MapView: UIViewRepresentable {
             locationManager.requestWhenInUseAuthorization()
             locationManager.startUpdatingLocation()
             locationManager.startUpdatingHeading()
+        }
+        
+        func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
+            // Get the proposed region
+            let proposedRegion = mapView.region
+            
+            // Check if the center is within bounds
+            let center = proposedRegion.center
+            let span = proposedRegion.span
+            
+            // Calculate the edges of the visible region
+            let northEdge = center.latitude + span.latitudeDelta / 2
+            let southEdge = center.latitude - span.latitudeDelta / 2
+            let eastEdge = center.longitude + span.longitudeDelta / 2
+            let westEdge = center.longitude - span.longitudeDelta / 2
+            
+            // Check if any edge is outside the bounds
+            if northEdge > parent.maxLatitude ||
+               southEdge < parent.minLatitude ||
+               eastEdge > parent.maxLongitude ||
+               westEdge < parent.minLongitude {
+                
+                // Calculate the constrained center
+                var constrainedCenter = center
+                constrainedCenter.latitude = max(parent.minLatitude + span.latitudeDelta/2,
+                                              min(parent.maxLatitude - span.latitudeDelta/2,
+                                                  center.latitude))
+                constrainedCenter.longitude = max(parent.minLongitude + span.longitudeDelta/2,
+                                               min(parent.maxLongitude - span.longitudeDelta/2,
+                                                   center.longitude))
+                
+                // Create a new region with the constrained center
+                let constrainedRegion = MKCoordinateRegion(
+                    center: constrainedCenter,
+                    span: span
+                )
+                
+                // Set the constrained region
+                mapView.setRegion(constrainedRegion, animated: true)
+            }
         }
         
         func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
