@@ -297,11 +297,19 @@ struct ContentView: View {
     
     var filteredPOIs: [POI] {
         if selectedCategories.isEmpty {
-            return [] // Return empty array when no categories are selected
+            print("No categories selected, returning empty POI list")
+            return []
         } else {
-            return pois.filter { poi in
-                !Set(poi.categories).isDisjoint(with: selectedCategories)
+            print("Selected categories: \(selectedCategories)")
+            let filtered = pois.filter { poi in
+                print("Checking POI: \(poi.title)")
+                print("POI categories: \(poi.categories)")
+                let matches = !Set(poi.categories).isDisjoint(with: selectedCategories)
+                print("POI \(poi.title) matches: \(matches)")
+                return matches
             }
+            print("Found \(filtered.count) matching POIs")
+            return filtered
         }
     }
 
@@ -310,8 +318,8 @@ struct ContentView: View {
             MapView(region: $region, 
                    mapType: $mapType, 
                    selectedRoute: $selectedRoute, 
-                   pois: pois,  // Full list for lookups
-                   filteredPOIs: filteredPOIs) { poi in  // Filtered list for display
+                   pois: pois,
+                   filteredPOIs: filteredPOIs) { poi in
                 selectedPOI = poi
                 showPOIPopup = true
             }
@@ -387,6 +395,7 @@ struct ContentView: View {
                     selectedCategory: $selectedCategory,
                     categories: categories,
                     onPOISelected: { poi in
+                        print("Centering map on POI: \(poi.title) at (\(poi.coordinate.latitude), \(poi.coordinate.longitude))")
                         withAnimation {
                             region = MKCoordinateRegion(
                                 center: poi.coordinate,
@@ -495,6 +504,15 @@ struct MapView: UIViewRepresentable {
     }
     
     func updateUIView(_ view: MKMapView, context: Context) {
+        // Update region if it has changed
+        if view.region.center.latitude != region.center.latitude ||
+           view.region.center.longitude != region.center.longitude ||
+           view.region.span.latitudeDelta != region.span.latitudeDelta ||
+           view.region.span.longitudeDelta != region.span.longitudeDelta {
+            print("Updating map region to: \(region.center.latitude), \(region.center.longitude)")
+            view.setRegion(region, animated: true)
+        }
+        
         view.mapType = mapType
         
         // Update POI annotations using filteredPOIs
@@ -865,11 +883,13 @@ struct CategoryPickerView: View {
                             Toggle("", isOn: Binding(
                                 get: { selectedCategories.contains(category) },
                                 set: { isOn in
+                                    print("Category \(category) toggled to \(isOn)")
                                     if isOn {
                                         selectedCategories.insert(category)
                                     } else {
                                         selectedCategories.remove(category)
                                     }
+                                    print("Selected categories now: \(selectedCategories)")
                                 }
                             ))
                             .labelsHidden()
@@ -885,6 +905,7 @@ struct CategoryPickerView: View {
             
             HStack {
                 Button("Clear All") {
+                    print("Clearing all categories")
                     selectedCategories.removeAll()
                 }
                 .padding()
@@ -936,6 +957,7 @@ struct POIListView: View {
             
             List(filteredPOIs, id: \.title) { poi in
                 Button(action: {
+                    print("Selected POI: \(poi.title) at (\(poi.coordinate.latitude), \(poi.coordinate.longitude))")
                     onPOISelected(poi)
                 }) {
                     VStack(alignment: .leading) {
