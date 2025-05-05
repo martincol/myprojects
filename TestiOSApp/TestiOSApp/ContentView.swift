@@ -307,16 +307,17 @@ struct ContentView: View {
     @State private var htmlAttributedString: AttributedString? = nil
     @State private var selectedCategory: String = "All"
     @StateObject private var tileDownloadManager = TileDownloadManager()
+    @State private var shouldUpdateRegion = true // Flag to control region updates
 
     let pois = loadPOIsFromCSV()
     let routes = loadRoutesFromCSV()
     
     init() {
         // Start downloading tiles asynchronously
-        tileDownloadManager.isDownloading = true
-        TileDownloadManager.downloadTiles(for: region) { [tileDownloadManager] in
-            tileDownloadManager.isDownloading = false
-        }
+        //tileDownloadManager.isDownloading = true
+        //TileDownloadManager.downloadTiles(for: region) { [tileDownloadManager] in
+        //    tileDownloadManager.isDownloading = false
+        //}
     }
     
     var categories: [String] {
@@ -348,7 +349,8 @@ struct ContentView: View {
                    mapType: $mapType, 
                    selectedRoute: $selectedRoute, 
                    pois: pois,
-                   filteredPOIs: filteredPOIs) { poi in
+                   filteredPOIs: filteredPOIs,
+                   shouldUpdateRegion: $shouldUpdateRegion) { poi in
                 selectedPOI = poi
                 showPOIPopup = true
             }
@@ -437,7 +439,9 @@ struct ContentView: View {
                     categories: categories,
                     onPOISelected: { poi in
                         print("Centering map on POI: \(poi.title) at (\(poi.coordinate.latitude), \(poi.coordinate.longitude))")
+                        shouldUpdateRegion = true
                         withAnimation {
+                            // Create a smaller region around the POI
                             region = MKCoordinateRegion(
                                 center: poi.coordinate,
                                 span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
@@ -476,9 +480,19 @@ struct ContentView: View {
 }
 
 class OfflineTileOverlay: MKTileOverlay {
+    // Define the bounds of our available tiles - Hard-coded to Southampton area
+    static let minLatitude: CLLocationDegrees = 50.85  // Southampton area bounds - tighter constraints
+    static let maxLatitude: CLLocationDegrees = 50.95
+    static let minLongitude: CLLocationDegrees = -1.45
+    static let maxLongitude: CLLocationDegrees = -1.35
+    
+    // Track which tiles are available
+    private var availableTiles = Set<String>()
+    
     init() {
         super.init(urlTemplate: nil)
         self.canReplaceMapContent = true
+        self.tileSize = CGSize(width: 256, height: 256)
     }
     
     override func loadTile(at path: MKTileOverlayPath, result: @escaping (Data?, Error?) -> Void) {
@@ -490,6 +504,21 @@ class OfflineTileOverlay: MKTileOverlay {
         
         // If not found, return empty data instead of nil to prevent fallback to Apple Maps
         result(Data(), nil)
+    }
+    
+    // Static method to get bounds
+    static func getBounds() -> MKCoordinateRegion {
+        let center = CLLocationCoordinate2D(
+            latitude: (minLatitude + maxLatitude) / 2,
+            longitude: (minLongitude + maxLongitude) / 2
+        )
+        
+        let span = MKCoordinateSpan(
+            latitudeDelta: maxLatitude - minLatitude,
+            longitudeDelta: maxLongitude - minLongitude
+        )
+        
+        return MKCoordinateRegion(center: center, span: span)
     }
     
     private func loadTileDataFromDisk(x: Int, y: Int, z: Int) -> Data? {
@@ -513,25 +542,48 @@ class OfflineTileOverlay: MKTileOverlay {
     }
 }
 
+func tileForCoordinate(latitude: Double, longitude: Double, zoom: Int) -> (x: Int, y: Int) {
+    let n = pow(2.0, Double(zoom))
+    let radLat = latitude * .pi / 180.0
+    
+    let x = Int((longitude + 180.0) / 360.0 * n)
+    let y = Int((1.0 - log(tan(radLat) + 1.0 / cos(radLat)) / .pi) / 2.0 * n)
+    
+    return (x: x, y: y)
+}
+
 struct MapView: UIViewRepresentable {
     @Binding var region: MKCoordinateRegion
     @Binding var mapType: MKMapType
     @Binding var selectedRoute: Route?
+    @Binding var shouldUpdateRegion: Bool
     let pois: [POI]  // Full list of POIs for lookups
     let filteredPOIs: [POI]  // Filtered list for display
     let onPOITap: (POI) -> Void
     
     // Add zoom level constraints
-    private let minZoomLevel: Double = 12  // Maximum zoom out
-    private let maxZoomLevel: Double = 18 // Maximum zoom in
     private let minLatitudeDelta: CLLocationDegrees = 0.003   // Most zoomed in
     private let maxLatitudeDelta: CLLocationDegrees = 0.1     // Most zoomed out
     
-    // Add map bounds
-    private let minLatitude: CLLocationDegrees = 50.8  // Southampton area bounds
-    private let maxLatitude: CLLocationDegrees = 51.0
-    private let minLongitude: CLLocationDegrees = -1.5
-    private let maxLongitude: CLLocationDegrees = -1.3
+    // Store initial region for bounds
+    private let initialRegion: MKCoordinateRegion
+    
+    init(region: Binding<MKCoordinateRegion>, 
+         mapType: Binding<MKMapType>, 
+         selectedRoute: Binding<Route?>, 
+         pois: [POI], 
+         filteredPOIs: [POI],
+         shouldUpdateRegion: Binding<Bool> = .constant(true),
+         onPOITap: @escaping (POI) -> Void) {
+        self._region = region
+        self._mapType = mapType
+        self._selectedRoute = selectedRoute
+        self._shouldUpdateRegion = shouldUpdateRegion
+        self.pois = pois
+        self.filteredPOIs = filteredPOIs
+        self.onPOITap = onPOITap
+        self.initialRegion = region.wrappedValue
+    }
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -557,19 +609,45 @@ struct MapView: UIViewRepresentable {
         // Set map type to satellite to hide default map labels
         mapView.mapType = .satellite
         
+        // Set initial region from ContentView
+        mapView.setRegion(initialRegion, animated: false)
+        
+        // Create a boundary region based on the initial region
+        // This will prevent scrolling outside the original visible area
+        let center = initialRegion.center
+        let span = initialRegion.span
+        
+        let boundaryRegion = MKCoordinateRegion(
+            center: center,
+            span: span
+        )
+        
+        // Set camera bounds
+        mapView.setCameraBoundary(
+            MKMapView.CameraBoundary(coordinateRegion: boundaryRegion),
+            animated: false
+        )
+        
+        // Set zoom restrictions
+        let minDistance = 300.0 // Maximum zoom in (smaller = more zoom)
+        let maxDistance = 15000.0 // Maximum zoom out
+        let zoomRange = MKMapView.CameraZoomRange(
+            minCenterCoordinateDistance: minDistance,
+            maxCenterCoordinateDistance: maxDistance
+        )
+        mapView.setCameraZoomRange(zoomRange, animated: false)
+        
         return mapView
     }
     
     func updateUIView(_ view: MKMapView, context: Context) {
-        var clampedRegion = region
-        clampedRegion.span.latitudeDelta = max(minLatitudeDelta, min(maxLatitudeDelta, clampedRegion.span.latitudeDelta))
-        clampedRegion.span.longitudeDelta = max(minLatitudeDelta, min(maxLatitudeDelta, clampedRegion.span.longitudeDelta))
-
-        if view.region.center.latitude != clampedRegion.center.latitude ||
-            view.region.center.longitude != clampedRegion.center.longitude ||
-            view.region.span.latitudeDelta != clampedRegion.span.latitudeDelta ||
-            view.region.span.longitudeDelta != clampedRegion.span.longitudeDelta {
-            view.setRegion(clampedRegion, animated: true)
+        // Only update the region if the shouldUpdateRegion flag is true
+        if shouldUpdateRegion {
+            view.setRegion(region, animated: true)
+            // Reset the flag after updating
+            DispatchQueue.main.async {
+                self.shouldUpdateRegion = false
+            }
         }
         
         view.mapType = mapType
@@ -606,43 +684,24 @@ struct MapView: UIViewRepresentable {
             locationManager.startUpdatingHeading()
         }
         
-        func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-            // Get the proposed region
-            let proposedRegion = mapView.region
-            
-            // Check if the center is within bounds
-            let center = proposedRegion.center
-            let span = proposedRegion.span
-            
-            // Calculate the edges of the visible region
-            let northEdge = center.latitude + span.latitudeDelta / 2
-            let southEdge = center.latitude - span.latitudeDelta / 2
-            let eastEdge = center.longitude + span.longitudeDelta / 2
-            let westEdge = center.longitude - span.longitudeDelta / 2
-            
-            // Check if any edge is outside the bounds
-            if northEdge > parent.maxLatitude ||
-               southEdge < parent.minLatitude ||
-               eastEdge > parent.maxLongitude ||
-               westEdge < parent.minLongitude {
-                
-                // Calculate the constrained center
-                var constrainedCenter = center
-                constrainedCenter.latitude = max(parent.minLatitude + span.latitudeDelta/2,
-                                              min(parent.maxLatitude - span.latitudeDelta/2,
-                                                  center.latitude))
-                constrainedCenter.longitude = max(parent.minLongitude + span.longitudeDelta/2,
-                                               min(parent.maxLongitude - span.longitudeDelta/2,
-                                                   center.longitude))
-                
-                // Create a new region with the constrained center
-                let constrainedRegion = MKCoordinateRegion(
-                    center: constrainedCenter,
-                    span: span
-                )
-                
-                // Set the constrained region
-                mapView.setRegion(constrainedRegion, animated: true)
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            if let tileOverlay = overlay as? MKTileOverlay {
+                return MKTileOverlayRenderer(tileOverlay: tileOverlay)
+            } else if let polyline = overlay as? MKPolyline {
+                let renderer = MKPolylineRenderer(polyline: polyline)
+                renderer.strokeColor = .blue
+                renderer.lineWidth = 3
+                return renderer
+            }
+            return MKOverlayRenderer(overlay: overlay)
+        }
+        
+        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            // Only update the SwiftUI binding if the region was changed by user interaction
+            if mapView.isUserInteractionEnabled && !parent.shouldUpdateRegion {
+                DispatchQueue.main.async {
+                    self.parent.region = mapView.region
+                }
             }
         }
         
@@ -720,18 +779,6 @@ struct MapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
             // Only show the callout, don't trigger the detail view
             print("Annotation selected - showing callout")
-        }
-        
-        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-            if overlay is MKTileOverlay {
-                return MKTileOverlayRenderer(overlay: overlay)
-            } else if let polyline = overlay as? MKPolyline {
-                let renderer = MKPolylineRenderer(polyline: polyline)
-                renderer.strokeColor = .blue
-                renderer.lineWidth = 3
-                return renderer
-            }
-            return MKOverlayRenderer(overlay: overlay)
         }
     }
     
