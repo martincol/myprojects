@@ -562,7 +562,7 @@ struct MapView: UIViewRepresentable {
     let onPOITap: (POI) -> Void
     
     // Add zoom level constraints
-    private let minLatitudeDelta: CLLocationDegrees = 0.003   // Most zoomed in
+    private let minLatitudeDelta: CLLocationDegrees = 0.01   // Most zoomed in (increased from 0.003)
     private let maxLatitudeDelta: CLLocationDegrees = 0.1     // Most zoomed out
     
     // Store initial region for bounds
@@ -628,8 +628,8 @@ struct MapView: UIViewRepresentable {
             animated: false
         )
         
-        // Set zoom restrictions
-        let minDistance = 300.0 // Maximum zoom in (smaller = more zoom)
+        // Set zoom restrictions - increase minimum distance to reduce zoom level
+        let minDistance = 1000.0 // Maximum zoom in (increased from 300.0 - larger = less zoom)
         let maxDistance = 15000.0 // Maximum zoom out
         let zoomRange = MKMapView.CameraZoomRange(
             minCenterCoordinateDistance: minDistance,
