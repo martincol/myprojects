@@ -33,29 +33,27 @@ struct POI: Equatable {
 extension POI {
     var color: Color {
         // Use the first category for color
-        guard let firstCategory = categories.first?.lowercased() else {
+        guard let firstCategory = categories.first else {
             return .pink
         }
         
         switch firstCategory {
-        case "museum":
-            return .purple
-        case "park":
-            return .green
-        case "historic":
-            return .brown
-        case "shopping":
+        case "Walking Tour":
             return .blue
-        case "restaurant":
+        case "Pubs":
+            return .green
+        case "Historical":
+            return .brown
+        case "Shopping":
+            return .white
+        case "Restaurants":
             return .red
-        case "entertainment":
-            return .orange
-        case "transport":
+        case "Activities":
+            return .white
+        case "Transport":
             return .gray
-        case "education":
-            return .indigo
-        case "sports":
-            return .teal
+        case "Cafes":
+            return .yellow
         default:
             return .pink
         }
@@ -146,9 +144,85 @@ struct POIPopupView: View {
     }
 }
 
+struct HTMLTextView: UIViewRepresentable {
+    let html: String
+    @Binding var contentHeight: CGFloat
+    
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.isScrollEnabled = false  // Disable internal scrolling
+        webView.scrollView.bounces = false
+        webView.navigationDelegate = context.coordinator
+        return webView
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        let htmlWithStyle = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {
+                        font-family: -apple-system;
+                        font-size: 17px;
+                        color: #000000;
+                        line-height: 1.5;
+                        margin: 0;
+                        padding: 0;
+                        background-color: transparent;
+                    }
+                    img {
+                        max-width: 100%;
+                        height: auto;
+                    }
+                </style>
+            </head>
+            <body>
+                \(html)
+            </body>
+            </html>
+        """
+        
+        // Use a local base URL to prevent network requests
+        let baseURL = URL(string: "about:blank")
+        uiView.loadHTMLString(htmlWithStyle, baseURL: baseURL)
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, WKNavigationDelegate {
+        var parent: HTMLTextView
+        
+        init(_ parent: HTMLTextView) {
+            self.parent = parent
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // Get the content height after the page loads
+            webView.evaluateJavaScript("document.documentElement.scrollHeight") { (height, error) in
+                if let height = height as? CGFloat {
+                    DispatchQueue.main.async {
+                        self.parent.contentHeight = height
+                    }
+                }
+            }
+        }
+    }
+}
+
 struct POIDetailView: View {
     let poi: POI
     @Environment(\.dismiss) private var dismiss
+    @State private var htmlContentHeight: CGFloat = 0
     
     var body: some View {
         NavigationStack {
@@ -179,9 +253,9 @@ struct POIDetailView: View {
                     
                     // Description
                     if poi.description.contains("<") && poi.description.contains(">") {
-                        HTMLTextView(html: poi.description)
+                        HTMLTextView(html: poi.description, contentHeight: $htmlContentHeight)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 300)
+                            .frame(height: htmlContentHeight)
                     } else {
                         Text(poi.description)
                             .font(.body)
@@ -290,13 +364,56 @@ class TileDownloadManager: ObservableObject {
     }
 }
 
+// Update XML decoding structures
+struct POIXML: Codable {
+    let pois: [POIEntry]
+    
+    enum CodingKeys: String, CodingKey {
+        case pois = "poi"
+    }
+}
+
+struct POIEntry: Codable {
+    let title: String
+    let latitude: String
+    let longitude: String
+    let description: String?
+    let categories: Categories?
+    let image: String?
+    let sections: Sections?
+    
+    struct Categories: Codable {
+        let category: [String]
+    }
+    
+    struct Sections: Codable {
+        let section: [Section]
+    }
+    
+    struct Section: Codable {
+        let name: String
+        let content: String
+        
+        enum CodingKeys: String, CodingKey {
+            case name
+            case content = ""
+        }
+        
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            name = try container.decode(String.self, forKey: .name)
+            content = try container.decode(String.self, forKey: .content)
+        }
+    }
+}
+
 struct ContentView: View {
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 50.9097, longitude: -1.4044), // Southampton coordinates
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
     
-    @State private var mapType: MKMapType = .standard
+    @State private var mapType: MKMapType = .satellite
     @State private var selectedPOI: POI? = nil
     @State private var showPOIPopup = false
     @State private var showPOIList = false
@@ -309,7 +426,7 @@ struct ContentView: View {
     @StateObject private var tileDownloadManager = TileDownloadManager()
     @State private var shouldUpdateRegion = true // Flag to control region updates
 
-    let pois = loadPOIsFromCSV()
+    let pois = loadPOIsFromXML()
     let routes = loadRoutesFromCSV()
     
     init() {
@@ -441,7 +558,6 @@ struct ContentView: View {
                         print("Centering map on POI: \(poi.title) at (\(poi.coordinate.latitude), \(poi.coordinate.longitude))")
                         shouldUpdateRegion = true
                         withAnimation {
-                            // Create a smaller region around the POI
                             region = MKCoordinateRegion(
                                 center: poi.coordinate,
                                 span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
@@ -602,6 +718,9 @@ struct MapView: UIViewRepresentable {
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .followWithHeading
         
+        // Disable annotation clustering
+        mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "POIAnnotation")
+        
         // Add offline tile overlay
         let offlineOverlay = OfflineTileOverlay()
         mapView.addOverlay(offlineOverlay, level: .aboveLabels)
@@ -613,7 +732,6 @@ struct MapView: UIViewRepresentable {
         mapView.setRegion(initialRegion, animated: false)
         
         // Create a boundary region based on the initial region
-        // This will prevent scrolling outside the original visible area
         let center = initialRegion.center
         let span = initialRegion.span
         
@@ -628,9 +746,9 @@ struct MapView: UIViewRepresentable {
             animated: false
         )
         
-        // Set zoom restrictions - increase minimum distance to reduce zoom level
-        let minDistance = 1000.0 // Maximum zoom in (increased from 300.0 - larger = less zoom)
-        let maxDistance = 15000.0 // Maximum zoom out
+        // Set zoom restrictions
+        let minDistance = 1000.0
+        let maxDistance = 15000.0
         let zoomRange = MKMapView.CameraZoomRange(
             minCenterCoordinateDistance: minDistance,
             maxCenterCoordinateDistance: maxDistance
@@ -641,10 +759,8 @@ struct MapView: UIViewRepresentable {
     }
     
     func updateUIView(_ view: MKMapView, context: Context) {
-        // Only update the region if the shouldUpdateRegion flag is true
         if shouldUpdateRegion {
             view.setRegion(region, animated: true)
-            // Reset the flag after updating
             DispatchQueue.main.async {
                 self.shouldUpdateRegion = false
             }
@@ -716,24 +832,36 @@ struct MapView: UIViewRepresentable {
         }
         
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            // Don't customize user location annotation
+            if annotation is MKUserLocation {
+                return nil
+            }
+            
             guard let annotation = annotation as? MKPointAnnotation else { return nil }
             
             let identifier = "POIAnnotation"
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
             
             if annotationView == nil {
                 annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-                annotationView?.canShowCallout = true
-                
-                // Add detail disclosure button
-                let button = UIButton(type: .detailDisclosure)
-                annotationView?.rightCalloutAccessoryView = button
-            } else {
-                annotationView?.annotation = annotation
             }
             
+            // Configure the annotation view
+            annotationView?.annotation = annotation
+            annotationView?.canShowCallout = true
+            annotationView?.titleVisibility = .hidden  // Hide the permanent title
+            annotationView?.subtitleVisibility = .hidden
+            
+            // Add detail disclosure button
+            let button = UIButton(type: .detailDisclosure)
+            annotationView?.rightCalloutAccessoryView = button
+            
+            // Disable clustering for this annotation
+            annotationView?.clusteringIdentifier = nil
+            annotationView?.displayPriority = .required
+            
             // Set marker color based on the POI's first category
-            if let markerView = annotationView as? MKMarkerAnnotationView {
+            if let markerView = annotationView {
                 // Find the POI in the full pois array to get its color
                 if let poi = parent.pois.first(where: { 
                     $0.title == annotation.title && 
@@ -806,7 +934,7 @@ struct MapView: UIViewRepresentable {
                 
                 // Optionally zoom to show the entire route
                 let region = MKCoordinateRegion(polyline.boundingMapRect)
-                mapView.setRegion(region, animated: true)
+                //mapView.setRegion(region, animated: true)
             }
         } catch {
             print("Failed to decode GPX: \(error)")
@@ -894,35 +1022,72 @@ func splitCSVLine(_ line: String) -> [String] {
     return results.map { $0.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "") }
 }
 
-func loadPOIsFromCSV() -> [POI] {
-    guard let path = Bundle.main.path(forResource: "pois", ofType: "csv"),
-          let content = try? String(contentsOfFile: path) else {
-        print("CSV file not found")
+// Update loadPOIsFromXML with better error handling
+func loadPOIsFromXML() -> [POI] {
+    guard let path = Bundle.main.path(forResource: "pois", ofType: "xml"),
+          let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+        print("XML file not found")
         return []
     }
-    var pois: [POI] = []
-    let lines = content.components(separatedBy: .newlines)
-    for line in lines {
-        let fields = splitCSVLine(line)
-        if fields.count >= 5,
-           let lat = Double(fields[0]),
-           let lon = Double(fields[1]) {
-            let title = fields[2]
-            let description = fields[3]
-            // Split categories by semicolon and trim whitespace
-            let categories = fields[4].components(separatedBy: ";").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            let imageName = fields.count > 5 ? fields[5] : nil // Optional 6th field for image name
-            let poi = POI(
-                coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
-                title: title,
-                description: description,
-                categories: categories,
-                imageName: imageName
-            )
-            pois.append(poi)
+    
+    do {
+        let decoder = XMLDecoder()
+        decoder.keyDecodingStrategy = .useDefaultKeys
+        
+        // Print the XML content for debugging
+        if let xmlString = String(data: data, encoding: .utf8) {
+            print("XML content:")
+            print(xmlString)
         }
+        
+        let xmlData = try decoder.decode(POIXML.self, from: data)
+        
+        return xmlData.pois.compactMap { entry -> POI? in
+            guard let lat = Double(entry.latitude),
+                  let lon = Double(entry.longitude) else {
+                print("Invalid coordinates for POI: \(entry.title)")
+                return nil
+            }
+            
+            // Convert XML entry to POI
+            let categories = entry.categories?.category ?? []
+            let description = entry.description ?? ""
+            
+            // If there are sections, combine them into a formatted description
+            var finalDescription = description
+            if let sections = entry.sections?.section {
+                let sectionsHTML = sections.map { section in
+                    "<h3>\(section.name)</h3><p>\(section.content)</p>"
+                }.joined(separator: "")
+                finalDescription = sectionsHTML
+            }
+            
+            return POI(
+                coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                title: entry.title,
+                description: finalDescription,
+                categories: categories,
+                imageName: entry.image
+            )
+        }
+    } catch {
+        print("Failed to decode XML: \(error)")
+        if let decodingError = error as? DecodingError {
+            switch decodingError {
+            case .keyNotFound(let key, let context):
+                print("Key not found: \(key.stringValue), context: \(context.debugDescription)")
+            case .typeMismatch(let type, let context):
+                print("Type mismatch: expected \(type), context: \(context.debugDescription)")
+            case .valueNotFound(let type, let context):
+                print("Value not found: expected \(type), context: \(context.debugDescription)")
+            case .dataCorrupted(let context):
+                print("Data corrupted: \(context.debugDescription)")
+            @unknown default:
+                print("Unknown decoding error")
+            }
+        }
+        return []
     }
-    return pois
 }
 
 func loadRoutesFromCSV() -> [Route] {
@@ -952,56 +1117,6 @@ func loadRoutesFromCSV() -> [Route] {
         }
     }
     return routes
-}
-
-struct HTMLTextView: UIViewRepresentable {
-    let html: String
-    
-    func makeUIView(context: Context) -> WKWebView {
-        let configuration = WKWebViewConfiguration()
-        configuration.allowsInlineMediaPlayback = true
-        configuration.mediaTypesRequiringUserActionForPlayback = []
-        
-        let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.isOpaque = false
-        webView.backgroundColor = .clear
-        webView.scrollView.isScrollEnabled = true
-        webView.scrollView.bounces = false
-        return webView
-    }
-    
-    func updateUIView(_ uiView: WKWebView, context: Context) {
-        let htmlWithStyle = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body {
-                        font-family: -apple-system;
-                        font-size: 17px;
-                        color: #000000;
-                        line-height: 1.5;
-                        margin: 0;
-                        padding: 0;
-                        background-color: transparent;
-                    }
-                    img {
-                        max-width: 100%;
-                        height: auto;
-                    }
-                </style>
-            </head>
-            <body>
-                \(html)
-            </body>
-            </html>
-        """
-        
-        // Use a local base URL to prevent network requests
-        let baseURL = URL(string: "about:blank")
-        uiView.loadHTMLString(htmlWithStyle, baseURL: baseURL)
-    }
 }
 
 struct CategoryPickerView: View {
@@ -1064,6 +1179,9 @@ struct CategoryPickerView: View {
         .shadow(radius: 10)
         .padding()
         .transition(.move(edge: .bottom))
+        .onAppear {
+            //shouldUpdateRegion = false
+        }
     }
 }
 
@@ -1124,6 +1242,9 @@ struct POIListView: View {
         .shadow(radius: 10)
         .padding()
         .transition(.move(edge: .trailing))
+        .onAppear {
+            //shouldUpdateRegion = false
+        }
     }
 }
 
@@ -1151,8 +1272,6 @@ struct RoutePickerView: View {
                             .foregroundColor(.secondary)
                         HStack {
                             Text("\(String(format: "%.1f", route.distance)) km")
-                            Text("•")
-                            Text(route.duration)
                         }
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -1185,6 +1304,9 @@ struct RoutePickerView: View {
         .shadow(radius: 10)
         .padding()
         .transition(.move(edge: .trailing))
+        .onAppear {
+            //shouldUpdateRegion = false
+        }
     }
 }
 

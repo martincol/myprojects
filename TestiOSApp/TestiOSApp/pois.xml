@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pois>
+    <poi>
+        <title>The Bargate</title>
+        <latitude>50.90265139761352</latitude>
+        <longitude>-1.4040677374258979</longitude>
+        <description>A Grade I listed medieval gatehouse, stands as a prominent icon in Southampton's city centre. Originally constructed around 1180 AD using stone and flint, it served as the primary entrance to the fortified Norman town. Throughout its long history, the Bargate underwent several significant alterations. Around 1290, large drum towers with arrow slits were added to its north side, enhancing its defensive capabilities. The south side received a two-storey extension towards the end of the 13th century.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+        <image>bargate.jpg</image>
+        <sections>
+            <section name="Overview">The Bargate is a Grade I listed medieval gatehouse in Southampton's city centre. Originally constructed around 1180 AD using stone and flint, it served as the primary entrance to the fortified Norman town. It underwent several significant alterations over its long history.</section>
+            <section name="Medieval">Around 1290, large drum towers with arrow slits were added to its north side, enhancing its defensive capabilities. The south side received a two-storey extension towards the end of the 13th century.</section>
+            <section name="Victorian">The Bargate was eventually separated from the adjoining town walls in the 1930s to accommodate increasing traffic.</section>
+        </sections>
+    </poi>
+    <poi>
+        <title>Arundel Tower</title>
+        <latitude>50.90267677022715</latitude>
+        <longitude>-1.4060203856145232</longitude>
+        <description>A prominent feature of Southampton's medieval town walls, stands at the northwest corner of the old defences. Dating primarily from the late 13th century (around 1260-1300 AD), this impressive half-drum tower was strategically designed for archery defence, featuring two fighting platforms and originally reaching a height of nearly 60 feet, offering commanding views out to sea.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Catchcold Tower</title>
+        <latitude>50.90230572114495</latitude>
+        <longitude>-1.4060122730557267</longitude>
+        <description>Sometimes known as Prince Edward's Tower, is a significant circular gun tower forming part of Southampton's western medieval town walls, located just south of Arundel Tower. Constructed in the early 15th century (with first documentary mention in 1429, though some sources suggest by 1420 or 1439), it was a relatively late but crucial addition to the town's defenses, designed specifically to accommodate the larger cannons that were becoming prevalent in warfare.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Southampton Castle</title>
+        <latitude>50.90086440598141</latitude>
+        <longitude>-1.4063306154575141</longitude>
+        <description>Southampton Castle's history stretches back to the Norman Conquest in the late 11th century. Strategically positioned in the town's northwest corner overlooking the River Test, it began as a timber motte and bailey design, likely replacing a large English hall.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Arcades</title>
+        <latitude>50.89976838206532</latitude>
+        <longitude>-1.4066889281179935</longitude>
+        <description>Southampton has a fascinating history regarding its arcades, which are more than just shopping thoroughfares; they are an integral part of its medieval defensive walls. The most prominent of these is 'The Arcades' located on the Western Esplanade.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Blue Anchor Lane and Tudor House</title>
+        <latitude>50.89961716121913</latitude>
+        <longitude>-1.4058136222002342</longitude>
+        <description>Blue Anchor Lane: This ancient, steeply sloping lane in Southampton's Old Town connects St Michael's Square to the quayside. Originally known as Wytegod's Lane in the 1300s after John Wytegod, a wealthy merchant and mayor who owned property nearby.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>West Gate</title>
+        <latitude>50.89889396315424</latitude>
+        <longitude>-1.4068950436511893</longitude>
+        <description>The West Gate was a crucial portal in medieval Southampton, providing direct access to West Quay, the town's sole commercial hub at the time. Dating back to the later 14th century, its earliest known name was Florence Stout's Gate.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Dancing Man Brewery at the Wool House</title>
+        <latitude>50.89745292300044</latitude>
+        <longitude>-1.4061225023274215</longitude>
+        <description>The Dancing Man Brewery, housed in Southampton's historic Wool House, is a place where centuries of history meet modern craft brewing. The Wool House itself is a remarkable Grade I listed medieval building, dating back to the late 14th century.</description>
+        <categories>
+            <category>Walking Tour</category>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Canute's Palace</title>
+        <latitude>50.89696543122965</latitude>
+        <longitude>-1.4048307548425125</longitude>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Gods House Tower</title>
+        <latitude>50.89630721299248</latitude>
+        <longitude>-1.4025839536431877</longitude>
+        <description>A cornerstone of Southampton's Old Town, boasts a rich and varied history stretching back to 1189. Originally known as God's House Gate, its prime function was to guard the Platform Quay, providing seaward access and defense.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Holyrood Church</title>
+        <latitude>50.89967764508515</latitude>
+        <longitude>-1.403560675519424</longitude>
+        <description>Holyrood Church, a significant landmark in Southampton, boasts a history stretching back to Anglo-Saxon times, though the structure visible today was built in 1320. Its name, meaning 'Holy Cross,' hints at an earlier Saxon origin, possibly pre-dating the Norman Conquest.</description>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Red Lion</title>
+        <latitude>50.8989510966405</latitude>
+        <longitude>-1.4037076743976766</longitude>
+        <description>A charming traditional pub with a cozy atmosphere, The Red Lion offers a great selection of ales and hearty meals. Perfect for unwinding after a long day, it features a beer garden and hosts regular live music events.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The London Hotel</title>
+        <latitude>50.8979520711738</latitude>
+        <longitude>-1.3970171897433592</longitude>
+        <description>This is Southamptons only LGBTQ+ pub. There are various themed nights throughout the week including drag acts and music bingo, The clientele is stightly older.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Hobbit</title>
+        <latitude>50.91880959894062</latitude>
+        <longitude>-1.3952567928194197</longitude>
+        <description>Emphasizing a cozy, enchanting atmosphere inspired by Tolkien's world, The Hobbit is a quirky pub that is just different enough to avoid copyright claims. There is often live music, heavy metal, rock and emo. They have dozens of different pint cocktails to drink in the large garden in the back. Remember your ID as everyone is checked and scanned.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Social</title>
+        <latitude>50.912211189827005</latitude>
+        <longitude>-1.4053695743968246</longitude>
+        <description>A trendy spot for both food and drinks, The Social is known for its creative cocktails and modern food offerings. Its vibrant interior draws in a youthful crowd, making it a lively place to socialize.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Dolphin</title>
+        <latitude>50.9223538226177</latitude>
+        <longitude>-1.3887140986303783</longitude>
+        <description>Located near the waterfront, The Dolphin is known for its relaxed ambiance and great sea views. It offers fresh seafood options along with an extensive drinks list, making it a popular dining destination.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Edge</title>
+        <latitude>50.91010887156975</latitude>
+        <longitude>-1.3993960013785953</longitude>
+        <description>Lively LGBTQ+ club with a dance floor, a stage and a patio, plus a music-free zone and a cocktail bar.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Standing Order</title>
+        <latitude>50.900536705229165</latitude>
+        <longitude>-1.4038166762523612</longitude>
+        <description>An old bank now repurposed as a Wetherspoon. If you didn't know Wetherspoons are a national chain known for their Cheap drinks and OK food. The menu includes most traditional pub meals.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Duke of Wellington</title>
+        <latitude>50.89873308865658</latitude>
+        <longitude>-1.4058300967106403</longitude>
+        <description>Historic building dating back to 1220 serves real ales and traditional food, plus open mic nights.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Dark Arts Potion Bar</title>
+        <latitude>50.89933295652327</latitude>
+        <longitude>-1.4039363232035273</longitude>
+        <description>Serving fancy cocktails with a fastasy/Wizzarding theme</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Board in the City</title>
+        <latitude>50.913575093804354</latitude>
+        <longitude>-1.39882567439674</longitude>
+        <description>This board game cafe has hundreds of games to play. The friendly staff will help by explaining the rules if you want to try something new. They have all the usual cafe fare and some basic food. This venue is run as a charitable business and booking is advised.</description>
+        <categories>
+            <category>Cafes</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Royal Pier Indian restaurant</title>
+        <latitude>50.896962830439584</latitude>
+        <longitude>-1.4070625789644</longitude>
+        <description>This eatery has recently changed hands and has mixed review. I can't comment on the food, but the building has some beautiful architecture</description>
+        <categories>
+            <category>Restaurants</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Town Quay</title>
+        <latitude>50.8958941641091</latitude>
+        <longitude>-1.4050077201276485</longitude>
+        <description>This quay is where you enbarqe for passenger services to the Isle of Wight. The trip is recommended. There is a slow car ferry and a fast passenger ferry. Said by some to be the worlds most expensive ferry for the distance</description>
+        <categories>
+            <category>Transport</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Ottoman Kitchen</title>
+        <latitude>50.8998924039237</latitude>
+        <longitude>-1.403664010787684</longitude>
+        <description>Award winning Turkish restaurant</description>
+        <categories>
+            <category>Restaurants</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Edisons</title>
+        <latitude>50.899422684651306</latitude>
+        <longitude>-1.4038658173388177</longitude>
+        <description>Is it a cafe or an estate agent, we are not sure, what do you think?</description>
+        <categories>
+            <category>Cafes</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Coriander Lounge</title>
+        <latitude>50.89970293130369</latitude>
+        <longitude>-1.4039615835323087</longitude>
+        <description>Highly rated Indian Restaurant</description>
+        <categories>
+            <category>Restaurants</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Lidl</title>
+        <latitude>50.90136918881781</latitude>
+        <longitude>-1.4038645337379425</longitude>
+        <description>City centre discount supermarket</description>
+        <categories>
+            <category>Shopping</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Rocket Ronnies</title>
+        <latitude>50.90140843374457</latitude>
+        <longitude>-1.4038647741540586</longitude>
+        <description>Pool hall with table tennis</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Decathlon</title>
+        <latitude>50.90333562901512</latitude>
+        <longitude>-1.409234850179477</longitude>
+        <description>If you are off camping and forgotten something try here. They have equipment for most sports at a good price</description>
+        <categories>
+            <category>Shopping</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>West Quay</title>
+        <latitude>50.90401877634195</latitude>
+        <longitude>-1.4043043921256417</longitude>
+        <description>This is Southamptons main shopping centre (mall). There are many entrances, the marker is at the above bar entrance. There are a great variety of shops with a food court at the top floor. The two largest shops are Marks and Spencer and John Lewis</description>
+        <categories>
+            <category>Shopping</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Quays</title>
+        <latitude>50.90082891784478</latitude>
+        <longitude>-1.4073663251009314</longitude>
+        <description>Sports centre with leasure pool and a flume</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>The Platform Tavern</title>
+        <latitude>50.89696543122965</latitude>
+        <longitude>-1.4048307548425125</longitude>
+        <description>Old school boozer in Southampton's dockyard serving pub lunches, sandwiches and all day breakfasts.</description>
+        <categories>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>High Score Arcade</title>
+        <latitude>50.90176044298466</latitude>
+        <longitude>-1.401321993069433</longitude>
+        <description>A huge variety of free to play arcade machines, you pay by the hour</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Maritimo Lounge</title>
+        <latitude>50.89620859630445</latitude>
+        <longitude>-1.3928304395568305</longitude>
+        <description>Modern cain pub with food and drink</description>
+        <categories>
+            <category>Restaurants</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Harbour Lights Picture House</title>
+        <latitude>50.89468272424892</latitude>
+        <longitude>-1.3930861993759787</longitude>
+        <description>Cinema</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Solent Sky</title>
+        <latitude>50.89773012048635</latitude>
+        <longitude>-1.3931985862430405</longitude>
+        <description>Museum of flight</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Showcase Cinema</title>
+        <latitude>50.90202627555881</latitude>
+        <longitude>-1.4065853430175872</longitude>
+        <description>Cinema</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Central Station</title>
+        <latitude>50.90782356056674</latitude>
+        <longitude>-1.4137124805077077</longitude>
+        <description>Direct Trains to London, the north and the west</description>
+        <categories>
+            <category>Transport</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Seacity Museum</title>
+        <latitude>50.90832462179308</latitude>
+        <longitude>-1.4076000126259003</longitude>
+        <description>Facinating look at the history of the city focusing on the Titanic crew, 699 of which were from Southampton. The city was the Titanics origin point</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>City Art Gallery</title>
+        <latitude>50.90856358754846</latitude>
+        <longitude>-1.4064019688927654</longitude>
+        <description>The city has a collection of art, and he gallery has temporary exhibits. Free</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Mayflower Theatre</title>
+        <latitude>50.908864220143364</latitude>
+        <longitude>-1.410203924005061</longitude>
+        <description>Often famous plays and musicals make their way here</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Cafe Thrive</title>
+        <latitude>50.902959132115065</latitude>
+        <longitude>-1.402098791516536</longitude>
+        <description>Good selection of vegan food</description>
+        <categories>
+            <category>Cafes</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>John Hansard Gallery</title>
+        <latitude>50.90789032554432</latitude>
+        <longitude>-1.4044543269176055</longitude>
+        <description>Rotating art exhibits, Free</description>
+        <categories>
+            <category>Activities</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Mettricks</title>
+        <latitude>50.90806082442931</latitude>
+        <longitude>-1.4039859286883516</longitude>
+        <description>A local chain of cafes, drinks are good, service is outstanding.</description>
+        <categories>
+            <category>Cafes</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>National Express Coach Station</title>
+        <latitude>50.90606131566658</latitude>
+        <longitude>-1.4088552979944509</longitude>
+        <description>National coach service. Particularly good for services to Heathrow</description>
+        <categories>
+            <category>Transport</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>ASDA</title>
+        <latitude>50.90590887081129</latitude>
+        <longitude>-1.4067215494883263</longitude>
+        <description>Large supermarket in the city centre</description>
+        <categories>
+            <category>Shopping</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Turtle Bay</title>
+        <latitude>50.907777441868745</latitude>
+        <longitude>-1.4049041900599153</longitude>
+        <description>Caribean style food with great cocktails</description>
+        <categories>
+            <category>Restaurants</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Medieval Merchants House</title>
+        <latitude>50.8985468173975</latitude>
+        <longitude>-1.4051957823773158</longitude>
+        <description>Ancient Building</description>
+        <categories>
+            <category>Historical</category>
+        </categories>
+    </poi>
+    <poi>
+        <title>Digital Darts at O'Neils</title>
+        <latitude>50.90741380622976</latitude>
+        <longitude>-1.4045304510761782</longitude>
+        <description>Darts with digital games and scoring in a pub</description>
+        <categories>
+            <category>Activities</category>
+            <category>Pubs</category>
+        </categories>
+    </poi>
+</pois> 
