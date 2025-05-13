@@ -1,0 +1,2 @@
+write some text about the history of catchcold tower in Southampton. There should be 6 paragraphs of about 200 words each. Each paragraph should be about a different historical era. One of the paragraphs should be a summary, which should be the first paragraph. The output should be in XML, with each paragraph in a <section> field. The title of each paragraph should be in a 'name' field which is a member of the <section> tag. Mention architectural styles, and interesting facts. Try to include more facts and less waffle. Make the text a little bit entertaining.
+

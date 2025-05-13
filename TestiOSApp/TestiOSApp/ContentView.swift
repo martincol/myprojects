@@ -5,17 +5,22 @@
 //  Created by Martin Collins on 26/04/2025.
 //
 
+typealias SScrollView = SwiftUI.ScrollView
+
 import SwiftUI
 import MapKit
 import CoreLocation
 import Foundation
 import XMLCoder
 import WebKit
+import AVFoundation
 
 struct POI: Equatable {
     let coordinate: CLLocationCoordinate2D
     let title: String
     let description: String
+    let directions: String?
+    let audio: String?  // Add new audio field
     let categories: [String]
     let imageName: String? // Optional image name
     
@@ -24,6 +29,8 @@ struct POI: Equatable {
                lhs.coordinate.longitude == rhs.coordinate.longitude &&
                lhs.title == rhs.title &&
                lhs.description == rhs.description &&
+               lhs.directions == rhs.directions &&
+               lhs.audio == rhs.audio &&  // Add to equality check
                lhs.categories == rhs.categories &&
                lhs.imageName == rhs.imageName
     }
@@ -223,6 +230,10 @@ struct POIDetailView: View {
     let poi: POI
     @Environment(\.dismiss) private var dismiss
     @State private var htmlContentHeight: CGFloat = 0
+    @State private var isPlaying = false
+    @State private var audioPlayer: AVAudioPlayer?
+    @State private var progress: Double = 0
+    @State private var timer: Timer?
     
     var body: some View {
         NavigationStack {
@@ -249,6 +260,101 @@ struct POIDetailView: View {
                                 .foregroundColor(.red)
                                 .padding()
                         }
+                    }
+                    
+                    // Audio player if available
+                    if let audioFileName = poi.audio {
+                        VStack(spacing: 8) {
+                            HStack {
+                                // Rewind button
+                                Button(action: {
+                                    if let player = audioPlayer {
+                                        let newTime = max(0, player.currentTime - 30)
+                                        player.currentTime = newTime
+                                        progress = newTime / player.duration
+                                    }
+                                }) {
+                                    Image(systemName: "gobackward.30")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.blue)
+                                }
+                                .padding(.trailing, 8)
+                                
+                                Button(action: {
+                                    if isPlaying {
+                                        audioPlayer?.pause()
+                                        timer?.invalidate()
+                                        timer = nil
+                                    } else {
+                                        do {
+                                            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+                                            try AVAudioSession.sharedInstance().setActive(true)
+                                            if let player = audioPlayer {
+                                                
+                                                let success = player.play()
+                                                
+                                                // Start progress timer
+                                                timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+                                                    if let player = audioPlayer {
+                                                        progress = player.currentTime / player.duration
+                                                        if !player.isPlaying {
+                                                            timer?.invalidate()
+                                                            timer = nil
+                                                            isPlaying = false
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                            }
+                                        } catch {
+                                            print("Failed to play audio: \(error)")
+                                        }
+                                    }
+                                    isPlaying.toggle()
+                                }) {
+                                    Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                                        .font(.system(size: 44))
+                                        .foregroundColor(.blue)
+                                }
+                                
+                                // Forward button
+                                Button(action: {
+                                    if let player = audioPlayer {
+                                        let newTime = min(player.duration, player.currentTime + 30)
+                                        player.currentTime = newTime
+                                        progress = newTime / player.duration
+                                    }
+                                }) {
+                                    Image(systemName: "goforward.30")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.blue)
+                                }
+                                .padding(.leading, 8)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    ProgressView(value: progress)
+                                        .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        .onAppear {
+                            setupAudioPlayer(fileName: audioFileName)
+                        }
+                        .onDisappear {
+                            timer?.invalidate()
+                            timer = nil
+                            audioPlayer?.stop()
+                            try? AVAudioSession.sharedInstance().setActive(false)
+                        }
+                    }
+                    
+                    // Directions if available
+                    if let directions = poi.directions {
+                        Text("Walking Tour Directions: \(directions)")
+                            .font(.body)
+                            .foregroundColor(.blue)
+                            .padding(.horizontal)
                     }
                     
                     // Description
@@ -287,11 +393,103 @@ struct POIDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        print("Done button pressed")
+                        timer?.invalidate()
+                        timer = nil
+                        audioPlayer?.stop()
+                        try? AVAudioSession.sharedInstance().setActive(false)
                         dismiss()
                     }
                 }
             }
         }
+    }
+    
+    private func setupAudioPlayer(fileName: String) {
+        let components = fileName.components(separatedBy: ".")
+        guard components.count == 2 else {
+            print("Invalid audio filename format: \(fileName)")
+            return
+        }
+        
+        let name = components[0]
+        let ext = components[1].lowercased() // Convert extension to lowercase
+        
+        // Validate file format
+        let supportedFormats = ["mp3", "wav", "m4a", "aac"]
+        guard supportedFormats.contains(ext) else {
+            print("Unsupported audio format: \(ext). Supported formats are: \(supportedFormats.joined(separator: ", "))")
+            return
+        }
+        
+        guard let path = Bundle.main.path(forResource: name, ofType: ext) else {
+            if let resourcePath = Bundle.main.resourcePath {
+                do {
+                    let files = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
+                    files.forEach { print($0) }
+                } catch {
+                    print("Failed to list bundle contents: \(error)")
+                }
+            }
+            return
+        }
+        
+        do {
+            // Configure audio session
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setActive(true)
+            
+            // Create URL and validate file exists
+            let url = URL(fileURLWithPath: path)
+            guard FileManager.default.fileExists(atPath: path) else {
+                print("Audio file does not exist at path: \(path)")
+                return
+            }
+            
+            // Get file attributes
+            let attributes = try FileManager.default.attributesOfItem(atPath: path)
+
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            
+            guard let player = audioPlayer else {
+                print("Failed to create audio player")
+                return
+            }
+            
+            // Configure audio player
+            player.volume = 1.0
+            player.numberOfLoops = 0
+            player.enableRate = true
+            player.rate = 1.0
+            
+            // Set up delegate to handle playback completion
+            player.delegate = AudioPlayerDelegate(isPlaying: $isPlaying, progress: $progress)
+            
+            let prepared = player.prepareToPlay()
+            print("Audio player prepared to play: \(prepared)")
+        } catch {
+            print("Failed to setup audio: \(error)")
+            if let avError = error as? AVAudioSession.ErrorCode {
+                print("AVAudioSession error code: \(avError.rawValue)")
+            }
+        }
+    }
+}
+
+// Add AudioPlayerDelegate class
+class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
+    @Binding var isPlaying: Bool
+    @Binding var progress: Double
+    
+    init(isPlaying: Binding<Bool>, progress: Binding<Double>) {
+        _isPlaying = isPlaying
+        _progress = progress
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        isPlaying = false
+        progress = 0
     }
 }
 
@@ -378,6 +576,8 @@ struct POIEntry: Codable {
     let latitude: String
     let longitude: String
     let description: String?
+    let directions: String?
+    let audio: String?  // Add new audio field
     let categories: Categories?
     let image: String?
     let sections: Sections?
@@ -413,7 +613,7 @@ struct ContentView: View {
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
     
-    @State private var mapType: MKMapType = .satellite
+    @State private var mapType: MKMapType = .standard
     @State private var selectedPOI: POI? = nil
     @State private var showPOIPopup = false
     @State private var showPOIList = false
@@ -444,18 +644,12 @@ struct ContentView: View {
     
     var filteredPOIs: [POI] {
         if selectedCategories.isEmpty {
-            print("No categories selected, returning empty POI list")
             return []
         } else {
-            print("Selected categories: \(selectedCategories)")
             let filtered = pois.filter { poi in
-                print("Checking POI: \(poi.title)")
-                print("POI categories: \(poi.categories)")
                 let matches = !Set(poi.categories).isDisjoint(with: selectedCategories)
-                print("POI \(poi.title) matches: \(matches)")
                 return matches
             }
-            print("Found \(filtered.count) matching POIs")
             return filtered
         }
     }
@@ -641,18 +835,18 @@ class OfflineTileOverlay: MKTileOverlay {
         // Try to load from app bundle (blue folder reference)
         let tileName = "\(z)-\(x)-\(y).png"
         if let bundlePath = Bundle.main.path(forResource: tileName, ofType: nil) {
-            print("Loading tile from bundle: \(tileName)")
+            //print("Loading tile from bundle: \(tileName)")
             return try? Data(contentsOf: URL(fileURLWithPath: bundlePath))
         }
         
         // Try to load from documents directory
-        if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let tilePath = documentsDirectory.appendingPathComponent("map_tiles").appendingPathComponent(tileName)
-            if let data = try? Data(contentsOf: tilePath) {
-                print("Loading tile from documents: \(tileName)")
-                return data
-            }
-        }
+        //if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+        //    let tilePath = documentsDirectory.appendingPathComponent("map_tiles").appendingPathComponent(tileName)
+        //    if let data = try? Data(contentsOf: tilePath) {
+        //        print("Loading tile from documents: \(tileName)")
+        //        return data
+        //    }
+        //}
         
         return nil
     }
@@ -721,12 +915,13 @@ struct MapView: UIViewRepresentable {
         // Disable annotation clustering
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "POIAnnotation")
         
+        // Set map type to standard (will be covered by our overlay)
+        mapView.mapType = .standard
+        
         // Add offline tile overlay
         let offlineOverlay = OfflineTileOverlay()
+        offlineOverlay.canReplaceMapContent = true  // This ensures our overlay replaces the base map
         mapView.addOverlay(offlineOverlay, level: .aboveLabels)
-        
-        // Set map type to satellite to hide default map labels
-        mapView.mapType = .satellite
         
         // Set initial region from ContentView
         mapView.setRegion(initialRegion, animated: false)
@@ -802,7 +997,9 @@ struct MapView: UIViewRepresentable {
         
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let tileOverlay = overlay as? MKTileOverlay {
-                return MKTileOverlayRenderer(tileOverlay: tileOverlay)
+                let renderer = MKTileOverlayRenderer(tileOverlay: tileOverlay)
+                renderer.alpha = 1.0  // Ensure our overlay is fully opaque
+                return renderer
             } else if let polyline = overlay as? MKPolyline {
                 let renderer = MKPolylineRenderer(polyline: polyline)
                 renderer.strokeColor = .blue
@@ -837,6 +1034,47 @@ struct MapView: UIViewRepresentable {
                 return nil
             }
             
+            // Handle directional arrow annotation
+            if let arrowAnnotation = annotation as? DirectionalArrowAnnotation {
+                let identifier = "DirectionalArrow"
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKAnnotationView
+                
+                if annotationView == nil {
+                    annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                }
+                
+                // Create arrow image
+                let arrowImage = UIImage(systemName: "arrow.up.circle.fill")?
+                    .withTintColor(.blue, renderingMode: .alwaysOriginal)
+                    .withConfiguration(UIImage.SymbolConfiguration(pointSize: 28, weight: .bold))
+                
+                annotationView?.image = arrowImage
+                annotationView?.transform = CGAffineTransform(rotationAngle: CGFloat(arrowAnnotation.bearing * .pi / 180))
+                annotationView?.layer.zPosition = arrowAnnotation.zPosition
+                return annotationView
+            }
+            
+            // Handle route start point annotation
+            if let pointAnnotation = annotation as? MKPointAnnotation,
+               pointAnnotation.title?.hasPrefix("Start:") == true {
+                let identifier = "RouteStartPoint"
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
+                
+                if annotationView == nil {
+                    annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                }
+                
+                annotationView?.annotation = annotation
+                annotationView?.canShowCallout = true
+                annotationView?.markerTintColor = .green
+                annotationView?.glyphImage = UIImage(systemName: "flag.fill")?
+                    .withConfiguration(UIImage.SymbolConfiguration(pointSize: 28, weight: .bold))
+                annotationView?.displayPriority = .required
+                annotationView?.layer.zPosition = 1.0  // Set zPosition below arrow but above other annotations
+                return annotationView
+            }
+            
+            // Handle POI annotations
             guard let annotation = annotation as? MKPointAnnotation else { return nil }
             
             let identifier = "POIAnnotation"
@@ -849,8 +1087,8 @@ struct MapView: UIViewRepresentable {
             // Configure the annotation view
             annotationView?.annotation = annotation
             annotationView?.canShowCallout = true
-            annotationView?.titleVisibility = .hidden  // Hide the permanent title
-            annotationView?.subtitleVisibility = .hidden
+            //annotationView?.titleVisibility = .hidden  // Hide the permanent title
+            //annotationView?.subtitleVisibility = .hidden
             
             // Add detail disclosure button
             let button = UIButton(type: .detailDisclosure)
@@ -872,6 +1110,7 @@ struct MapView: UIViewRepresentable {
                 }
             }
             
+            annotationView?.layer.zPosition = 0.0  // Set zPosition below route annotations
             return annotationView
         }
         
@@ -929,8 +1168,33 @@ struct MapView: UIViewRepresentable {
             }
             
             if !coordinates.isEmpty {
+                // Add the route polyline
                 let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                 mapView.addOverlay(polyline, level: .aboveLabels)
+                
+                // Add a marker at the starting point
+                let startPoint = coordinates[0]
+                let startAnnotation = MKPointAnnotation()
+                startAnnotation.coordinate = startPoint
+                startAnnotation.title = "Start: \(route.name)"
+                mapView.addAnnotation(startAnnotation)
+                
+                // Add directional arrow if we have at least 2 points
+                if coordinates.count >= 2 {
+                    // Place arrow at the end of first segment (second point)
+                    let firstPoint = coordinates[0]
+                    let secondPoint = coordinates[1]
+                    
+                    // Calculate bearing between points
+                    let bearing = calculateBearing(from: firstPoint, to: secondPoint)
+                    
+                    // Create arrow annotation at second point
+                    let arrowAnnotation = DirectionalArrowAnnotation(
+                        coordinate: secondPoint,
+                        bearing: bearing
+                    )
+                    mapView.addAnnotation(arrowAnnotation)
+                }
                 
                 // Optionally zoom to show the entire route
                 let region = MKCoordinateRegion(polyline.boundingMapRect)
@@ -939,6 +1203,34 @@ struct MapView: UIViewRepresentable {
         } catch {
             print("Failed to decode GPX: \(error)")
         }
+    }
+    
+    // Add DirectionalArrowAnnotation class
+    class DirectionalArrowAnnotation: NSObject, MKAnnotation {
+        let coordinate: CLLocationCoordinate2D
+        let bearing: Double
+        let zPosition: CGFloat = 2.0  // Increase zPosition to be above all other annotations
+        
+        init(coordinate: CLLocationCoordinate2D, bearing: Double) {
+            self.coordinate = coordinate
+            self.bearing = bearing
+            super.init()
+        }
+    }
+    
+    // Add helper function to calculate bearing
+    private func calculateBearing(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) -> Double {
+        let lat1 = from.latitude * .pi / 180
+        let lon1 = from.longitude * .pi / 180
+        let lat2 = to.latitude * .pi / 180
+        let lon2 = to.longitude * .pi / 180
+        
+        let dLon = lon2 - lon1
+        let y = sin(dLon) * cos(lat2)
+        let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
+        let bearing = atan2(y, x)
+        
+        return bearing * 180 / .pi
     }
 }
 
@@ -1034,12 +1326,6 @@ func loadPOIsFromXML() -> [POI] {
         let decoder = XMLDecoder()
         decoder.keyDecodingStrategy = .useDefaultKeys
         
-        // Print the XML content for debugging
-        if let xmlString = String(data: data, encoding: .utf8) {
-            print("XML content:")
-            print(xmlString)
-        }
-        
         let xmlData = try decoder.decode(POIXML.self, from: data)
         
         return xmlData.pois.compactMap { entry -> POI? in
@@ -1052,6 +1338,8 @@ func loadPOIsFromXML() -> [POI] {
             // Convert XML entry to POI
             let categories = entry.categories?.category ?? []
             let description = entry.description ?? ""
+            let directions = entry.directions
+            let audio = entry.audio
             
             // If there are sections, combine them into a formatted description
             var finalDescription = description
@@ -1066,6 +1354,8 @@ func loadPOIsFromXML() -> [POI] {
                 coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
                 title: entry.title,
                 description: finalDescription,
+                directions: directions,
+                audio: audio,
                 categories: categories,
                 imageName: entry.image
             )
