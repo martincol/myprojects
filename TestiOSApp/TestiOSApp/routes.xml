@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<routes>
+    <route>
+        <name>Medieval Historic Walk</name>
+        <description>A tour of Southampton's historic landmarks</description>
+        <gpxFileName>southamptonhistoric</gpxFileName>
+        <distance>2</distance>
+        <duration>1</duration>
+    </route>
+</routes>

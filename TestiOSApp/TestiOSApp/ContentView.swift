@@ -158,11 +158,11 @@ struct HTMLTextView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
-        configuration.mediaTypesRequiringUserActionForPlayback = []
+        //configuration.mediaTypesRequiringUserActionForPlayback = []
         
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.isOpaque = false
-        webView.backgroundColor = .clear
+        //webView.isOpaque = false
+        //webView.backgroundColor = .clear
         webView.scrollView.isScrollEnabled = false  // Disable internal scrolling
         webView.scrollView.bounces = false
         webView.navigationDelegate = context.coordinator
@@ -181,8 +181,8 @@ struct HTMLTextView: UIViewRepresentable {
                         font-size: 17px;
                         color: #000000;
                         line-height: 1.5;
-                        margin: 0;
-                        padding: 0;
+                        margin: 5;
+                        padding: 5;
                         background-color: transparent;
                     }
                     img {
@@ -234,6 +234,7 @@ struct POIDetailView: View {
     @State private var audioPlayer: AVAudioPlayer?
     @State private var progress: Double = 0
     @State private var timer: Timer?
+    @State public var audioPlayerDelegate: AudioPlayerDelegate? // Strong reference
     
     var body: some View {
         NavigationStack {
@@ -291,7 +292,7 @@ struct POIDetailView: View {
                                             try AVAudioSession.sharedInstance().setActive(true)
                                             if let player = audioPlayer {
                                                 
-                                                let success = player.play()
+                                                player.play()
                                                 
                                                 // Start progress timer
                                                 timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
@@ -415,25 +416,10 @@ struct POIDetailView: View {
         let name = components[0]
         let ext = components[1].lowercased() // Convert extension to lowercase
         
-        // Validate file format
-        let supportedFormats = ["mp3", "wav", "m4a", "aac"]
-        guard supportedFormats.contains(ext) else {
-            print("Unsupported audio format: \(ext). Supported formats are: \(supportedFormats.joined(separator: ", "))")
+        guard let path = Bundle.main.path(forResource: name, ofType: ext) else  {
             return
         }
-        
-        guard let path = Bundle.main.path(forResource: name, ofType: ext) else {
-            if let resourcePath = Bundle.main.resourcePath {
-                do {
-                    let files = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
-                    files.forEach { print($0) }
-                } catch {
-                    print("Failed to list bundle contents: \(error)")
-                }
-            }
-            return
-        }
-        
+                
         do {
             // Configure audio session
             let audioSession = AVAudioSession.sharedInstance()
@@ -447,9 +433,6 @@ struct POIDetailView: View {
                 return
             }
             
-            // Get file attributes
-            let attributes = try FileManager.default.attributesOfItem(atPath: path)
-
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             
             guard let player = audioPlayer else {
@@ -464,15 +447,14 @@ struct POIDetailView: View {
             player.rate = 1.0
             
             // Set up delegate to handle playback completion
-            player.delegate = AudioPlayerDelegate(isPlaying: $isPlaying, progress: $progress)
+            // Create and hold a strong reference to the delegate
+            self.audioPlayerDelegate = AudioPlayerDelegate(isPlaying: $isPlaying, progress: $progress)
+            player.delegate = self.audioPlayerDelegate
             
             let prepared = player.prepareToPlay()
             print("Audio player prepared to play: \(prepared)")
         } catch {
             print("Failed to setup audio: \(error)")
-            if let avError = error as? AVAudioSession.ErrorCode {
-                print("AVAudioSession error code: \(avError.rawValue)")
-            }
         }
     }
 }
@@ -626,8 +608,12 @@ struct ContentView: View {
     @StateObject private var tileDownloadManager = TileDownloadManager()
     @State private var shouldUpdateRegion = true // Flag to control region updates
 
+    // Add AppStorage for first launch tracking
+    @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false
+    @State private var showWelcomeView: Bool = false
+
     let pois = loadPOIsFromXML()
-    let routes = loadRoutesFromCSV()
+    let routes = loadRoutesFromXML()
     
     init() {
         // Start downloading tiles asynchronously
@@ -785,6 +771,21 @@ struct ContentView: View {
             if let poi = selectedPOI {
                 POIDetailView(poi: poi)
             }
+        }
+        .onAppear {
+            if !hasLaunchedBefore {
+                showWelcomeView = true
+                hasLaunchedBefore = true
+            }
+        }
+        .sheet(isPresented: $showWelcomeView) {
+            WelcomeView(isPresented: $showWelcomeView)
+                .onDisappear {
+                    // This onDisappear on WelcomeView itself might not be strictly necessary
+                    // if the sheet's isPresented binding handles dismissal correctly,
+                    // but it's good for ensuring the state is reset if needed.
+                    // showWelcomeView = false // Already handled by binding
+                }
         }
     }
 }
@@ -963,18 +964,33 @@ struct MapView: UIViewRepresentable {
         
         view.mapType = mapType
         
+        // Clear existing route-specific annotations and overlays first
+        view.removeOverlays(view.overlays.filter { $0 is MKPolyline })
+        let routeAnnotations = view.annotations.filter { annotation in
+            return annotation is DirectionalArrowAnnotation ||
+                   (annotation as? MKPointAnnotation)?.title?.hasPrefix("Start:") == true
+        }
+        view.removeAnnotations(routeAnnotations)
+        
         // Update POI annotations using filteredPOIs
-        view.removeAnnotations(view.annotations.filter { $0 is MKPointAnnotation })
-        let annotations = filteredPOIs.map { poi -> MKPointAnnotation in
+        // Remove only POI annotations before adding new ones to avoid flicker/duplication
+        let poiAnnotations = view.annotations.filter { annotation in
+            // Check if it's a POI annotation (not user location, not route start, not arrow)
+            return !(annotation is MKUserLocation) &&
+                   !((annotation as? MKPointAnnotation)?.title?.hasPrefix("Start:") == true) &&
+                   !(annotation is DirectionalArrowAnnotation)
+        }
+        view.removeAnnotations(poiAnnotations)
+        
+        let newPoiAnnotations = filteredPOIs.map { poi -> MKPointAnnotation in
             let annotation = MKPointAnnotation()
             annotation.coordinate = poi.coordinate
             annotation.title = poi.title
             return annotation
         }
-        view.addAnnotations(annotations)
+        view.addAnnotations(newPoiAnnotations)
         
         // Update route overlay if selected
-        view.removeOverlays(view.overlays.filter { $0 is MKPolyline })
         if let route = selectedRoute {
             loadAndDisplayRoute(route, on: view)
         }
@@ -1009,15 +1025,6 @@ struct MapView: UIViewRepresentable {
             return MKOverlayRenderer(overlay: overlay)
         }
         
-        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-            // Only update the SwiftUI binding if the region was changed by user interaction
-            if mapView.isUserInteractionEnabled && !parent.shouldUpdateRegion {
-                DispatchQueue.main.async {
-                    self.parent.region = mapView.region
-                }
-            }
-        }
-        
         func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
             switch status {
             case .authorizedWhenInUse, .authorizedAlways:
@@ -1037,7 +1044,7 @@ struct MapView: UIViewRepresentable {
             // Handle directional arrow annotation
             if let arrowAnnotation = annotation as? DirectionalArrowAnnotation {
                 let identifier = "DirectionalArrow"
-                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKAnnotationView
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
                 
                 if annotationView == nil {
                     annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
@@ -1197,7 +1204,7 @@ struct MapView: UIViewRepresentable {
                 }
                 
                 // Optionally zoom to show the entire route
-                let region = MKCoordinateRegion(polyline.boundingMapRect)
+                //let region = MKCoordinateRegion(polyline.boundingMapRect)
                 //mapView.setRegion(region, animated: true)
             }
         } catch {
@@ -1252,7 +1259,7 @@ func downloadVisibleTilesForRegion(_ region: MKCoordinateRegion) {
         let tiles = getTilesForRegion(region, zoom: zoom)
         print("Downloading \(tiles.count) tiles for zoom level \(zoom)")
         for tile in tiles {
-            downloadTile(x: tile.x, y: tile.y, zoom: zoom)
+           // downloadTile(x: tile.x, y: tile.y, zoom: zoom)
         }
     }
 }
@@ -1290,29 +1297,29 @@ func latLonToTile(lat: Double, lon: Double, zoom: Int) -> (x: Int, y: Int) {
     return (x: x, y: y)
 }
 
-func downloadTile(x: Int, y: Int, zoom: Int) {
-    print("\(zoom),\(x),\(y)")
-}
+// func downloadTile(x: Int, y: Int, zoom: Int) {
+//     print("\(zoom),\(x),\(y)")
+// }
 
 // Helper to split a CSV line, handling quoted fields
-func splitCSVLine(_ line: String) -> [String] {
-    var results: [String] = []
-    var value = ""
-    var insideQuotes = false
-    var iterator = line.makeIterator()
-    while let char = iterator.next() {
-        if char == "\"" {
-            insideQuotes.toggle()
-        } else if char == "," && !insideQuotes {
-            results.append(value)
-            value = ""
-        } else {
-            value.append(char)
-        }
-    }
-    results.append(value)
-    return results.map { $0.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "") }
-}
+// func splitCSVLine(_ line: String) -> [String] {
+//     var results: [String] = []
+//     var value = ""
+//     var insideQuotes = false
+//     var iterator = line.makeIterator()
+//     while let char = iterator.next() {
+//         if char == "\"" {
+//             insideQuotes.toggle()
+//         } else if char == "," && !insideQuotes {
+//             results.append(value)
+//             value = ""
+//         } else {
+//             value.append(char)
+//         }
+//     }
+//     results.append(value)
+//     return results.map { $0.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "") }
+// }
 
 // Update loadPOIsFromXML with better error handling
 func loadPOIsFromXML() -> [POI] {
@@ -1380,33 +1387,63 @@ func loadPOIsFromXML() -> [POI] {
     }
 }
 
-func loadRoutesFromCSV() -> [Route] {
-    guard let path = Bundle.main.path(forResource: "routes", ofType: "csv"),
-          let content = try? String(contentsOfFile: path) else {
-        print("Routes CSV file not found")
+// New function to load routes from XML
+func loadRoutesFromXML() -> [Route] {
+    guard let path = Bundle.main.path(forResource: "routes", ofType: "xml"),
+          let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+        print("routes.xml file not found")
         return []
     }
-    var routes: [Route] = []
-    let lines = content.components(separatedBy: .newlines)
-    for line in lines {
-        let fields = splitCSVLine(line)
-        if fields.count >= 5,
-           let distance = Double(fields[3]) {
-            let name = fields[0]
-            let description = fields[1]
-            let gpxFileName = fields[2]
-            let duration = fields[4]
-            let route = Route(
-                name: name,
-                description: description,
-                gpxFileName: gpxFileName,
-                distance: distance,
-                duration: duration
+
+    do {
+        let decoder = XMLDecoder()
+        decoder.keyDecodingStrategy = .useDefaultKeys // Match XML element names
+        let xmlData = try decoder.decode(RoutesXML.self, from: data)
+
+        return xmlData.route.compactMap { entry -> Route? in
+            guard let distanceDouble = Double(entry.distance) else {
+                print("Invalid distance format for route: \(entry.name) - value: \(entry.distance)")
+                return nil
+            }
+            return Route(
+                name: entry.name,
+                description: entry.description,
+                gpxFileName: entry.gpxFileName,
+                distance: distanceDouble,
+                duration: entry.duration
             )
-            routes.append(route)
         }
+    } catch {
+        print("Failed to decode routes.xml: \(error)")
+        if let decodingError = error as? DecodingError {
+            switch decodingError {
+            case .keyNotFound(let key, let context):
+                print("Key not found: \(key.stringValue), context: \(context.debugDescription)")
+            case .typeMismatch(let type, let context):
+                print("Type mismatch: expected \(type), context: \(context.debugDescription)")
+            case .valueNotFound(let type, let context):
+                print("Value not found: expected \(type), context: \(context.debugDescription)")
+            case .dataCorrupted(let context):
+                print("Data corrupted: \(context.debugDescription)")
+            @unknown default:
+                print("Unknown decoding error")
+            }
+        }
+        return []
     }
-    return routes
+}
+
+// New structs for parsing routes.xml
+struct RoutesXML: Codable {
+    let route: [RouteEntryXML]
+}
+
+struct RouteEntryXML: Codable {
+    let name: String
+    let description: String
+    let gpxFileName: String
+    let distance: String // Read as String first, then convert
+    let duration: String
 }
 
 struct CategoryPickerView: View {

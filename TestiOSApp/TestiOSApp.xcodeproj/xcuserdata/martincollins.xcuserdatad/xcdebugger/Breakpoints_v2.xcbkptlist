@@ -158,8 +158,8 @@
             filePath = "TestiOSApp/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "743"
-            endingLineNumber = "743"
+            startingLineNumber = "722"
+            endingLineNumber = "722"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -174,8 +174,8 @@
             filePath = "TestiOSApp/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "691"
-            endingLineNumber = "691"
+            startingLineNumber = "670"
+            endingLineNumber = "670"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -190,8 +190,8 @@
             filePath = "TestiOSApp/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "729"
-            endingLineNumber = "729"
+            startingLineNumber = "708"
+            endingLineNumber = "708"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -206,10 +206,10 @@
             filePath = "TestiOSApp/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "659"
-            endingLineNumber = "659"
-            landmarkName = "body"
-            landmarkType = "24">
+            startingLineNumber = "638"
+            endingLineNumber = "638"
+            landmarkName = "ContentView"
+            landmarkType = "14">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -222,8 +222,8 @@
             filePath = "TestiOSApp/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "663"
-            endingLineNumber = "663"
+            startingLineNumber = "642"
+            endingLineNumber = "642"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -238,9 +238,9 @@
             filePath = "TestiOSApp/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1392"
-            endingLineNumber = "1392"
-            landmarkName = "loadRoutesFromCSV()"
+            startingLineNumber = "1357"
+            endingLineNumber = "1357"
+            landmarkName = "loadPOIsFromXML()"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -254,8 +254,8 @@
             filePath = "TestiOSApp/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "896"
-            endingLineNumber = "896"
+            startingLineNumber = "875"
+            endingLineNumber = "875"
             landmarkName = "init(region:mapType:selectedRoute:pois:filteredPOIs:shouldUpdateRegion:onPOITap:)"
             landmarkType = "7">
          </BreakpointContent>
