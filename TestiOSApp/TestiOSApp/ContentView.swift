@@ -236,6 +236,10 @@ struct POIDetailView: View {
     @State private var timer: Timer?
     @State public var audioPlayerDelegate: AudioPlayerDelegate? // Strong reference
     
+    // Add speech synthesizer and state
+    @State private var speechSynthesizer = AVSpeechSynthesizer()
+    @State private var isSpeaking = false
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -358,6 +362,45 @@ struct POIDetailView: View {
                             .padding(.horizontal)
                     }
                     
+                    // Add text-to-speech button
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            if isSpeaking {
+                                speechSynthesizer.stopSpeaking(at: .immediate)
+                                isSpeaking = false
+                            } else {
+                                // Get the text to speak
+                                let textToSpeak: String
+                                if poi.description.contains("<") && poi.description.contains(">") {
+                                    // Strip HTML tags for speech
+                                    textToSpeak = poi.description.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression, range: nil)
+                                } else {
+                                    textToSpeak = poi.description
+                                }
+                                
+                                let utterance = AVSpeechUtterance(string: textToSpeak)
+                                utterance.rate = 0.5
+                                utterance.pitchMultiplier = 1.0
+                                utterance.volume = 1.0
+                                
+                                speechSynthesizer.speak(utterance)
+                                isSpeaking = true
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: isSpeaking ? "speaker.wave.2.fill" : "speaker.wave.2")
+                                Text(isSpeaking ? "Stop Reading" : "Read Aloud")
+                            }
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical)
+                    
                     // Description
                     if poi.description.contains("<") && poi.description.contains(">") {
                         HTMLTextView(html: poi.description, contentHeight: $htmlContentHeight)
@@ -398,6 +441,7 @@ struct POIDetailView: View {
                         timer?.invalidate()
                         timer = nil
                         audioPlayer?.stop()
+                        speechSynthesizer.stopSpeaking(at: .immediate)
                         try? AVAudioSession.sharedInstance().setActive(false)
                         dismiss()
                     }
@@ -616,7 +660,7 @@ struct ContentView: View {
     let routes = loadRoutesFromXML()
     
     init() {
-        // Start downloading tiles asynchronously
+        // Start downloading tiles asynchronously 
         //tileDownloadManager.isDownloading = true
         //TileDownloadManager.downloadTiles(for: region) { [tileDownloadManager] in
         //    tileDownloadManager.isDownloading = false

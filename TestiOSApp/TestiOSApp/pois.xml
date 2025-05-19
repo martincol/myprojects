@@ -5,8 +5,7 @@
         <latitude>50.90251611865478</latitude>
         <longitude>-1.404124547763451</longitude>
         <description></description>
-        <directions>Head west towards Burger King, climb the white stairs</directions>
-        <audio>bargate.mp3</audio>
+        <directions>Head west towards Burger King, climb the white stairs. Cross the road on the bridge</directions>
         <categories>
             <category>Walking Tour</category>
         </categories>
@@ -38,6 +37,8 @@
         <latitude>50.90267677022715</latitude>
         <longitude>-1.4060203856145232</longitude>
         <description></description>
+        <directions>Decend stairs, walk along top of wall</directions>
+        <image>arundeltower.jpg</image>
         <categories>
             <category>Walking Tour</category>
         </categories>
@@ -69,6 +70,8 @@
         <latitude>50.90230572114495</latitude>
         <longitude>-1.4060122730557267</longitude>
         <description></description>
+        <directions>Go to the right of the masonic hall</directions>
+        <image>catchcoldtower.jpg</image>
         <categories>
             <category>Walking Tour</category>
         </categories>
@@ -98,6 +101,7 @@
         <latitude>50.90086440598141</latitude>
         <longitude>-1.4063306154575141</longitude>
         <description></description>
+        <directions>Go down stairs, turn about and continue along wall</directions>
         <image>castle.png</image>
         <categories>
             <category>Walking Tour</category>
@@ -122,9 +126,6 @@
         Though the grand silhouette of Southampton Castle largely vanished from the skyline by the 19th century, its echoes reverberate through the modern city. The Victorian era, with its romantic fascination for the medieval, likely saved the few remaining fragments from complete obliteration. While much of the site was redeveloped with new roads like Upper Bugle Street and various council buildings, especially after the devastation of World War II bombing, key elements of the castle ingeniously survived by being incorporated into the town's impressive defensive walls. Today, visitors can still trace its formidable outline. The sturdy Castle Vault, once brimming with royal wine, the ancient Castle Watergate that provided access to the quay, and significant stretches of the bailey wall, particularly the high-standing northern section, are tangible reminders of its past might. Archaeological investigations, particularly between 1973 and 1983, have unearthed further secrets, excavating about 10% of the castle area. Now, these remnants are protected scheduled monuments, and recent city initiatives aim to further restore and highlight these historic assets. While a block of flats now stands where the mighty keep once dominated, the stones that remain offer a direct link to Southampton's rich, royal, and often rebellious past, ensuring its story continues to be told.
     </section>
 </sections>
-        
-        
-        
     </poi>
     <poi>
         <title>The Arcades</title>
@@ -132,6 +133,7 @@
         <longitude>-1.4066889281179935</longitude>
         <image>thearcades.jpg</image>
         <description></description>
+        <directions>Take the second archway into Blue Anchor Lane</directions>
         <categories>
             <category>Walking Tour</category>
         </categories>
@@ -165,6 +167,7 @@
         <latitude>50.89961716121913</latitude>
         <longitude>-1.4058136222002342</longitude>
         <description></description>
+        <directions>Retrace your steps back to the outside of the wall. Continue along wall and take a left after the Pig</directions>
         <image>blueanchorlane.jpg</image>
         <categories>
             <category>Walking Tour</category>
@@ -199,6 +202,8 @@
         <latitude>50.89889396315424</latitude>
         <longitude>-1.4068950436511893</longitude>
         <description></description>
+        <directions>You can climb up to the wall here and maybe see a cruise ship. When ready continue under the footbridge and ahead. You will see a monument to the pilgrim fathers on the right. </directions>
+        <image>westgate.jpg</image>
         <categories>
             <category>Walking Tour</category>
         </categories>
@@ -231,6 +236,7 @@
         <latitude>50.89745292300044</latitude>
         <longitude>-1.4061225023274215</longitude>
         <description></description>
+        <directions>Walk past the entrance to the Wool House. Cross the road and go down road signed 'no entry'</directions>
         <image>woolhouse.png</image>
         <categories>
             <category>Walking Tour</category>
@@ -266,6 +272,8 @@
         <latitude>50.89696543122965</latitude>
         <longitude>-1.4048307548425125</longitude>
         <description></description>
+        <directions>Continue ahead, cross High street, and head down Winkle street. </directions>
+        <image>canutespalace.jpg</image>
         <categories>
             <category>Walking Tour</category>
         </categories>
@@ -298,6 +306,7 @@
         <latitude>50.89630721299248</latitude>
         <longitude>-1.4025839536431877</longitude>
         <description></description>
+        <directions>Retrace your steps back to Winkle Street and head North. Take a left on Briton Street, and a right onto the High Street. Go straight ahead, the Red Lion is on the right.</directions>
         <image>godshousetower.png</image>
         <categories>
             <category>Walking Tour</category>
@@ -327,43 +336,16 @@
         
         
     </poi>
-    <poi>
-        <title>Holyrood Church</title>
-        <latitude>50.89967764508515</latitude>
-        <longitude>-1.403560675519424</longitude>
-        <description></description>
-        <categories>
-            <category>Walking Tour</category>
-        </categories>
-        
- <sections>
-    <section name="Holyrood: A Survivor's Tale in Stone and Spirit">
-        Holyrood Church, standing defiantly on Southampton's High Street, isn't just a ruin; it's a stubborn chronicle etched in stone, tracing its roots back perhaps a thousand years. Its name, Old English for 'Holy Cross,' whispers of Saxon origins long before the Normans stamped their mark. Though largely rebuilt in 1320 in the fashionable Decorated Gothic style, it likely replaced earlier, humbler structures serving the growing port town. For centuries, Holyrood was more than a place of worship; it was a civic hub, its bells marking time and alarms, its walls witnessing the ebb and flow of Southampton's maritime fortunes – from medieval wool wealth to the poignant farewells of emigrants and sailors. It weathered the Reformation, saw Georgian facelifts and Victorian tinkering, always adapting. But its greatest test came in November 1940, when Luftwaffe bombs gutted the ancient structure, leaving only a skeletal shell beneath the stars. Yet, like Southampton itself, Holyrood refused to vanish. Reborn not as a functioning church but as a poignant memorial garden dedicated to the Merchant Navy, its surviving stones, including the resilient spire, now embrace memorials – notably to the Titanic's musicians – offering a tranquil, powerful space reflecting resilience, remembrance, and centuries of city life.
-    </section>
-    <section name="Whispers of the Saxons and Norman Foundations (Pre-1320)">
-        Before the grand Gothic arches we associate with Holyrood pierced the Southampton skyline, older echoes filled this sacred spot. The very name 'Holyrood' – Holy Rood or Holy Cross – is a strong clue, pointing towards an Anglo-Saxon foundation, likely established well before William the Conqueror fancied a trip across the Channel in 1066. While concrete physical evidence of a Saxon church on this exact site is elusive (often reused in later foundations), its dedication and strategic position within the established Saxon settlement of Hamwic strongly suggest pre-Norman roots. Following the Conquest, as Southampton morphed into a key Norman port, any existing Saxon church would likely have been rebuilt or incorporated into a Norman structure, probably simpler and more robust, reflecting the Romanesque style of the era. Archaeological digs nearby have revealed Saxon burial grounds, hinting at the area's long-standing significance. This early Holyrood wouldn't have been the imposing structure of later centuries but a vital parish church serving the spiritual needs of a community finding its feet under new management, laying the groundwork for the more ambitious building to come as the town's prosperity grew alongside its burgeoning maritime trade.
-    </section>
-    <section name="Medieval Makeover: Gothic Grandeur and Civic Heart (1320 - 1600s)">
-        By the early 14th century, Southampton was flexing its economic muscles, fuelled by the lucrative wool trade, and decided its parish church needed an upgrade reflecting this status. Around 1320, Holyrood underwent a major reconstruction, emerging in the elegant Decorated Gothic style then sweeping England. Think pointed arches, larger windows potentially filled with colourful stained glass depicting biblical scenes (sadly long lost), and intricate stone tracery. This rebuild transformed it into a prominent landmark on the bustling High Street, conveniently close to the Bargate, the town's main northern entrance. Its central location made it more than just a place for Sunday service; it became intertwined with civic life. The church bells weren't just for summoning the faithful; they rang out alarms for fires or approaching enemies, marked curfews, and celebrated victories or royal visits. Important local figures and wealthy merchants, perhaps grown rich from the wool staple, likely funded chapels or memorials within its walls, vying for prestige and divine favour. During the turbulent centuries that followed, including the scare of French raids and the religious upheaval of the Reformation under Henry VIII and Elizabeth I, Holyrood stood as a constant, adapting its rituals and appearance but remaining the spiritual and often social anchor of Southampton's core.
-    </section>
-    <section name="Georgian Facelifts, Victorian Vigour, and Maritime Ties (1700s - 1939)">
-        As Southampton navigated the transition from medieval port to Georgian spa town and then into a bustling Victorian industrial and passenger hub, Holyrood church adapted alongside it. The 18th century, favouring classical elegance, might have seen internal 'improvements' – perhaps galleries added to accommodate growing congregations, box pews installed for the well-to-do, or the medieval stonework covered with plaster for a smoother finish. By the 19th century, with the town booming thanks to railways and ocean liners, Holyrood underwent further restoration, often driven by the Victorian Gothic Revival movement which sought to recapture a perceived medieval purity. A significant restoration occurred around 1849. Throughout this period, the church maintained strong maritime connections. It became known as the 'Church of the Sailors,' hosting services for crews and passengers before they embarked on long voyages. Its prominent spire served as a familiar landmark for ships navigating Southampton Water. Memorials to those lost at sea likely began accumulating within its walls, reflecting the town's deep dependence on, and frequent tragedies related to, the maritime world. It witnessed the departure of countless emigrants seeking new lives across the oceans and held services connected to major shipping lines, cementing its role beyond a simple parish church.
-    </section>
-    <section name="Trial by Fire: The Blitz and Utter Devastation (November 1940)">
-        The relative peace Holyrood had enjoyed ended abruptly on the night of November 30th, 1940. Southampton, a critical port and industrial target, was enduring the height of the Blitz. Luftwaffe bombers unleashed waves of high explosives and, more devastatingly for Holyrood, thousands of incendiary bombs designed to start uncontrollable fires. The church, with its ancient timbers and large open spaces, stood little chance. Incendiaries rained down, lodging in the roof structure. Despite the heroic efforts of firefighters battling blazes across the city, the fire within Holyrood took hold with terrifying speed. Flames consumed the magnificent timber roof, centuries-old pews, the organ, and priceless fixtures. Stained glass windows exploded inwards from the intense heat. By morning, the heart of Southampton was ravaged, and Holyrood was a smouldering, roofless shell. The main body of the church was gutted, its interior destroyed, precious memorials fractured or obliterated. Miraculously, the stone spire and tower, though damaged, remained standing, a skeletal finger pointing accusingly at the sky amidst the surrounding destruction. This single night erased centuries of accumulated history within its walls, leaving only the fire-blackened stone outline as a stark testament to the brutality of modern warfare.
-    </section>
-    <section name="Rebirth as Remembrance: The Merchant Navy Memorial (1950s - Present)">
-        In the aftermath of the Blitz, Southampton faced the monumental task of rebuilding. While many bombed churches were restored, a different path was chosen for Holyrood. Recognising the poignancy of the ruin and the city's profound connection to the sea, the decision was made not to fully rebuild but to preserve the shell as a memorial garden. This transformation took shape in the 1950s. The surviving walls were stabilised, the floor paved, and the interior landscaped with grass and flowerbeds, creating a space for quiet contemplation. Crucially, it was dedicated as the official memorial to the men and women of the British Merchant Navy lost in World War II, a fitting tribute in a city whose prosperity and wartime survival were so deeply entwined with maritime service. Within this tranquil space, new memorials joined the few fragments that survived the fire. Most notably, a fountain and memorial plaque dedicated to the heroic musicians of the RMS Titanic, who famously played on as the ship sank, were installed, moved from their previous location. Other plaques commemorate local worthies and maritime events. Today, Holyrood remains roofless but resilient, a free-to-enter sanctuary offering a unique blend of history, horticulture, and remembrance, ensuring the stories of the church and the sacrifices of seafarers continue to resonate.
-    </section>
-</sections>        
-        
-        
-    </poi>
+    
+    
+    
     <poi>
         <title>The Red Lion</title>
         <latitude>50.8989510966405</latitude>
         <longitude>-1.4037076743976766</longitude>
         <description></description>
+        <directions>Continue North along High Street</directions>
+        <image>redlion.jpg</image>
         <categories>
             <category>Walking Tour</category>
             <category>Pubs</category>
@@ -393,6 +375,45 @@
 
 
     </poi>
+    
+    
+    
+    
+    <poi>
+        <title>Holyrood Church</title>
+        <latitude>50.89967764508515</latitude>
+        <longitude>-1.403560675519424</longitude>
+        <description></description>
+        <directions>Continue north along the High Street</directions>
+        <image>holyrood.jpg</image>
+        <categories>
+            <category>Walking Tour</category>
+        </categories>
+        
+ <sections>
+    <section name="Holyrood: A Survivor's Tale in Stone and Spirit">
+        Holyrood Church, standing defiantly on Southampton's High Street, isn't just a ruin; it's a stubborn chronicle etched in stone, tracing its roots back perhaps a thousand years. Its name, Old English for 'Holy Cross,' whispers of Saxon origins long before the Normans stamped their mark. Though largely rebuilt in 1320 in the fashionable Decorated Gothic style, it likely replaced earlier, humbler structures serving the growing port town. For centuries, Holyrood was more than a place of worship; it was a civic hub, its bells marking time and alarms, its walls witnessing the ebb and flow of Southampton's maritime fortunes – from medieval wool wealth to the poignant farewells of emigrants and sailors. It weathered the Reformation, saw Georgian facelifts and Victorian tinkering, always adapting. But its greatest test came in November 1940, when Luftwaffe bombs gutted the ancient structure, leaving only a skeletal shell beneath the stars. Yet, like Southampton itself, Holyrood refused to vanish. Reborn not as a functioning church but as a poignant memorial garden dedicated to the Merchant Navy, its surviving stones, including the resilient spire, now embrace memorials – notably to the Titanic's musicians – offering a tranquil, powerful space reflecting resilience, remembrance, and centuries of city life.
+    </section>
+    <section name="Whispers of the Saxons and Norman Foundations (Pre-1320)">
+        Before the grand Gothic arches we associate with Holyrood pierced the Southampton skyline, older echoes filled this sacred spot. The very name 'Holyrood' – Holy Rood or Holy Cross – is a strong clue, pointing towards an Anglo-Saxon foundation, likely established well before William the Conqueror fancied a trip across the Channel in 1066. While concrete physical evidence of a Saxon church on this exact site is elusive (often reused in later foundations), its dedication and strategic position within the established Saxon settlement of Hamwic strongly suggest pre-Norman roots. Following the Conquest, as Southampton morphed into a key Norman port, any existing Saxon church would likely have been rebuilt or incorporated into a Norman structure, probably simpler and more robust, reflecting the Romanesque style of the era. Archaeological digs nearby have revealed Saxon burial grounds, hinting at the area's long-standing significance. This early Holyrood wouldn't have been the imposing structure of later centuries but a vital parish church serving the spiritual needs of a community finding its feet under new management, laying the groundwork for the more ambitious building to come as the town's prosperity grew alongside its burgeoning maritime trade.
+    </section>
+    <section name="Medieval Makeover: Gothic Grandeur and Civic Heart (1320 - 1600s)">
+        By the early 14th century, Southampton was flexing its economic muscles, fuelled by the lucrative wool trade, and decided its parish church needed an upgrade reflecting this status. Around 1320, Holyrood underwent a major reconstruction, emerging in the elegant Decorated Gothic style then sweeping England. Think pointed arches, larger windows potentially filled with colourful stained glass depicting biblical scenes (sadly long lost), and intricate stone tracery. This rebuild transformed it into a prominent landmark on the bustling High Street, conveniently close to the Bargate, the town's main northern entrance. Its central location made it more than just a place for Sunday service; it became intertwined with civic life. The church bells weren't just for summoning the faithful; they rang out alarms for fires or approaching enemies, marked curfews, and celebrated victories or royal visits. Important local figures and wealthy merchants, perhaps grown rich from the wool staple, likely funded chapels or memorials within its walls, vying for prestige and divine favour. During the turbulent centuries that followed, including the scare of French raids and the religious upheaval of the Reformation under Henry VIII and Elizabeth I, Holyrood stood as a constant, adapting its rituals and appearance but remaining the spiritual and often social anchor of Southampton's core.
+    </section>
+    <section name="Georgian Facelifts, Victorian Vigour, and Maritime Ties (1700s - 1939)">
+        As Southampton navigated the transition from medieval port to Georgian spa town and then into a bustling Victorian industrial and passenger hub, Holyrood church adapted alongside it. The 18th century, favouring classical elegance, might have seen internal 'improvements' – perhaps galleries added to accommodate growing congregations, box pews installed for the well-to-do, or the medieval stonework covered with plaster for a smoother finish. By the 19th century, with the town booming thanks to railways and ocean liners, Holyrood underwent further restoration, often driven by the Victorian Gothic Revival movement which sought to recapture a perceived medieval purity. A significant restoration occurred around 1849. Throughout this period, the church maintained strong maritime connections. It became known as the 'Church of the Sailors,' hosting services for crews and passengers before they embarked on long voyages. Its prominent spire served as a familiar landmark for ships navigating Southampton Water. Memorials to those lost at sea likely began accumulating within its walls, reflecting the town's deep dependence on, and frequent tragedies related to, the maritime world. It witnessed the departure of countless emigrants seeking new lives across the oceans and held services connected to major shipping lines, cementing its role beyond a simple parish church.
+    </section>
+    <section name="Trial by Fire: The Blitz and Utter Devastation (November 1940)">
+        The relative peace Holyrood had enjoyed ended abruptly on the night of November 30th, 1940. Southampton, a critical port and industrial target, was enduring the height of the Blitz. Luftwaffe bombers unleashed waves of high explosives and, more devastatingly for Holyrood, thousands of incendiary bombs designed to start uncontrollable fires. The church, with its ancient timbers and large open spaces, stood little chance. Incendiaries rained down, lodging in the roof structure. Despite the heroic efforts of firefighters battling blazes across the city, the fire within Holyrood took hold with terrifying speed. Flames consumed the magnificent timber roof, centuries-old pews, the organ, and priceless fixtures. Stained glass windows exploded inwards from the intense heat. By morning, the heart of Southampton was ravaged, and Holyrood was a smouldering, roofless shell. The main body of the church was gutted, its interior destroyed, precious memorials fractured or obliterated. Miraculously, the stone spire and tower, though damaged, remained standing, a skeletal finger pointing accusingly at the sky amidst the surrounding destruction. This single night erased centuries of accumulated history within its walls, leaving only the fire-blackened stone outline as a stark testament to the brutality of modern warfare.
+    </section>
+    <section name="Rebirth as Remembrance: The Merchant Navy Memorial (1950s - Present)">
+        In the aftermath of the Blitz, Southampton faced the monumental task of rebuilding. While many bombed churches were restored, a different path was chosen for Holyrood. Recognising the poignancy of the ruin and the city's profound connection to the sea, the decision was made not to fully rebuild but to preserve the shell as a memorial garden. This transformation took shape in the 1950s. The surviving walls were stabilised, the floor paved, and the interior landscaped with grass and flowerbeds, creating a space for quiet contemplation. Crucially, it was dedicated as the official memorial to the men and women of the British Merchant Navy lost in World War II, a fitting tribute in a city whose prosperity and wartime survival were so deeply entwined with maritime service. Within this tranquil space, new memorials joined the few fragments that survived the fire. Most notably, a fountain and memorial plaque dedicated to the heroic musicians of the RMS Titanic, who famously played on as the ship sank, were installed, moved from their previous location. Other plaques commemorate local worthies and maritime events. Today, Holyrood remains roofless but resilient, a free-to-enter sanctuary offering a unique blend of history, horticulture, and remembrance, ensuring the stories of the church and the sacrifices of seafarers continue to resonate.
+    </section>
+</sections>        
+        
+        
+    </poi>
+
 
 
    <poi>
@@ -400,6 +421,8 @@
         <latitude>50.900164225025954</latitude>
         <longitude>-1.403774188665897</longitude>
         <description></description>
+        <directions>Continue north along the High Street back to the Bargate</directions>
+        <image>dolphinhotel.jpg</image>
         <categories>
             <category>Walking Tour</category>
         </categories>
@@ -425,18 +448,13 @@
     </section>
 </sections>
 
-
-
     </poi>
-
-
-
 
     <poi>
         <title>The London Hotel</title>
         <latitude>50.8979520711738</latitude>
         <longitude>-1.3970171897433592</longitude>
-        <description>This is Southamptons only LGBTQ+ pub. There are various themed nights throughout the week including drag acts and music bingo, The clientele is stightly older.</description>
+        <description>This is Southamptons only LGBTQ+ pub. There are various themed nights throughout the week including drag acts and music bingo. Mixture of ages.</description>
         <categories>
             <category>Pubs</category>
         </categories>
@@ -481,7 +499,7 @@
         <title>The Standing Order</title>
         <latitude>50.900536705229165</latitude>
         <longitude>-1.4038166762523612</longitude>
-        <description>An old bank now repurposed as a Wetherspoon. If you didn't know Wetherspoons are a national chain known for their Cheap drinks and OK food. The menu includes most traditional pub meals.</description>
+        <description>An old bank now repurposed as a Wetherspoon. If you didn't know Wetherspoons are a national chain known for their cheap drinks and food. The menu includes most traditional pub meals.</description>
         <categories>
             <category>Pubs</category>
         </categories>
@@ -499,7 +517,7 @@
         <title>Dark Arts Potion Bar</title>
         <latitude>50.89933295652327</latitude>
         <longitude>-1.4039363232035273</longitude>
-        <description>Serving fancy cocktails with a fastasy/Wizzarding theme</description>
+        <description>Serving fancy cocktails with a fastasy/Wizzarding theme. Solve puzzles while you drink.</description>
         <categories>
             <category>Pubs</category>
         </categories>
@@ -508,7 +526,7 @@
         <title>Board in the City</title>
         <latitude>50.913575093804354</latitude>
         <longitude>-1.39882567439674</longitude>
-        <description>This board game cafe has hundreds of games to play. The friendly staff will help by explaining the rules if you want to try something new. They have all the usual cafe fare and some basic food. This venue is run as a charitable business and booking is advised.</description>
+        <description>This community board game cafe has hundreds of games to play. The friendly staff will help by explaining the rules if you want to try something new. They have all the usual cafe fare and some basic food. This venue is run as a charitable business and booking is advised. You pay £5 for entry and you can stay as long as you like.</description>
         <categories>
             <category>Cafes</category>
         </categories>
@@ -517,7 +535,7 @@
         <title>Royal Pier Indian restaurant</title>
         <latitude>50.896962830439584</latitude>
         <longitude>-1.4070625789644</longitude>
-        <description>This eatery has recently changed hands and has mixed review. I can't comment on the food, but the building has some beautiful architecture</description>
+        <description>This eatery has recently changed hands and has mixed reviews. I can't comment on the food, but the building has some beautiful architecture</description>
         <categories>
             <category>Restaurants</category>
         </categories>
@@ -526,7 +544,7 @@
         <title>Town Quay</title>
         <latitude>50.8958941641091</latitude>
         <longitude>-1.4050077201276485</longitude>
-        <description>This quay is where you enbarqe for passenger services to the Isle of Wight. The trip is recommended. There is a slow car ferry and a fast passenger ferry. Said by some to be the worlds most expensive ferry for the distance</description>
+        <description>This quay is where you enbarqe for passenger services to the Isle of Wight. The trip is recommended. There is a slow car ferry and a fast passenger ferry. Said by some to be the worlds most expensive ferry for the distance.</description>
         <categories>
             <category>Transport</category>
         </categories>
@@ -562,7 +580,7 @@
         <title>Lidl</title>
         <latitude>50.90136918881781</latitude>
         <longitude>-1.4038645337379425</longitude>
-        <description>City centre discount supermarket</description>
+        <description>Small city centre supermarket</description>
         <categories>
             <category>Shopping</category>
         </categories>
@@ -598,7 +616,7 @@
         <title>The Quays</title>
         <latitude>50.90082891784478</latitude>
         <longitude>-1.4073663251009314</longitude>
-        <description>Sports centre with leasure pool and a flume</description>
+        <description>Sports centre with olympic pool, leasure pool and a flume</description>
         <categories>
             <category>Activities</category>
         </categories>
@@ -625,7 +643,7 @@
         <title>Maritimo Lounge</title>
         <latitude>50.89620859630445</latitude>
         <longitude>-1.3928304395568305</longitude>
-        <description>Modern cain pub with food and drink</description>
+        <description>Modern chain pub with food and drink</description>
         <categories>
             <category>Restaurants</category>
         </categories>
@@ -652,7 +670,7 @@
         <title>Showcase Cinema</title>
         <latitude>50.90202627555881</latitude>
         <longitude>-1.4065853430175872</longitude>
-        <description>Cinema</description>
+        <description>Southamptons newest cinema</description>
         <categories>
             <category>Activities</category>
         </categories>
@@ -661,7 +679,7 @@
         <title>Central Station</title>
         <latitude>50.90782356056674</latitude>
         <longitude>-1.4137124805077077</longitude>
-        <description>Direct Trains to London, the north and the west</description>
+        <description>Direct Trains to London, the north and the west. There are facilities on both sides of the tracks including a heated waiting room. If you want to know more about trains in the UK look at. www.seat61.com</description>
         <categories>
             <category>Transport</category>
         </categories>
@@ -679,7 +697,7 @@
         <title>City Art Gallery</title>
         <latitude>50.90856358754846</latitude>
         <longitude>-1.4064019688927654</longitude>
-        <description>The city has a collection of art, and he gallery has temporary exhibits. Free</description>
+        <description>The city has a collection of art, and the gallery has temporary exhibits. Free</description>
         <categories>
             <category>Activities</category>
         </categories>
@@ -724,7 +742,7 @@
         <title>National Express Coach Station</title>
         <latitude>50.90606131566658</latitude>
         <longitude>-1.4088552979944509</longitude>
-        <description>National coach service. Particularly good for services to Heathrow</description>
+        <description>National coach service. Particularly good for services to Heathrow.</description>
         <categories>
             <category>Transport</category>
         </categories>
@@ -751,7 +769,7 @@
         <title>Medieval Merchants House</title>
         <latitude>50.8985468173975</latitude>
         <longitude>-1.4051957823773158</longitude>
-        <description>Ancient Building</description>
+        <description>The Southampton Medieval Merchants House is a historic building dating back to the 14th century, reflecting the city's medieval prosperity. Located in the Old Town, it was originally the home of wealthy merchants who traded in wool and other goods. The house features timber-framed architecture with intricate craftsmanship visible in its exposed beams and decorative details. It served as both a residence and a place of commerce, illustrating Southampton's importance as a trading port during the Middle Ages. Today, the building is preserved as a heritage site, offering visitors insight into medieval merchant life and the city's historical significance. Sadly this building is rarely open.</description>
         <categories>
             <category>Historical</category>
         </categories>
