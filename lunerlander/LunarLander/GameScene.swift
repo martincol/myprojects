@@ -30,12 +30,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var velocityLabel: SKLabelNode!
     private var altitudeLabel: SKLabelNode!
     private var fuelLabel: SKLabelNode!
+    private var timeLabel: SKLabelNode!
+    private var bestTimeLabel: SKLabelNode!
     private var instructionLabel: SKLabelNode!
     
     // Game state
     private var fuel: CGFloat = 50.0
     private let maxFuel: CGFloat = 50.0
     private let fuelConsumptionRate: CGFloat = 12.0
+    
+    // Timer and high score system
+    private var gameStartTime: TimeInterval = 0
+    private var currentGameTime: TimeInterval = 0
+    private var isTimerRunning = false
+    private let highScoreKey = "LunarLanderBestTime"
     
     override func didMove(to view: SKView) {
         setupScene()
@@ -45,6 +53,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupBackground()
         setupUI()
         setupParticles()
+        
+        // Start the timer immediately
+        startTimer()
     }
     
     private func setupScene() {
@@ -229,11 +240,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         fuelLabel.text = "Fuel: 100%"
         addChild(fuelLabel)
         
+        timeLabel = SKLabelNode(fontNamed: "Arial")
+        timeLabel.fontSize = 16
+        timeLabel.fontColor = .white
+        timeLabel.position = CGPoint(x: 60, y: size.height - 115)
+        timeLabel.text = "Time: 0.0 s"
+        addChild(timeLabel)
+        
+        bestTimeLabel = SKLabelNode(fontNamed: "Arial")
+        bestTimeLabel.fontSize = 16
+        bestTimeLabel.fontColor = .white
+        bestTimeLabel.position = CGPoint(x: 60, y: size.height - 140)
+        updateBestTimeDisplay()
+        addChild(bestTimeLabel)
+        
         instructionLabel = SKLabelNode(fontNamed: "Arial")
         instructionLabel.fontSize = 18
         instructionLabel.fontColor = .yellow
         instructionLabel.position = CGPoint(x: size.width * 0.5, y: size.height * 0.5)
-        instructionLabel.text = "Touch left/right sides for horizontal thrust, center for vertical"
+        instructionLabel.text = "Left/Right: Horizontal • Center: Vertical"
         addChild(instructionLabel)
         
         let wait = SKAction.wait(forDuration: 3.0)
@@ -270,6 +295,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func update(_ currentTime: TimeInterval) {
         guard let landerPhysics = lander.physicsBody else { return }
+        
+        // Update current game time
+        if isTimerRunning {
+            currentGameTime = CACurrentMediaTime() - gameStartTime
+        }
         
         // Vertical thruster
         if isThrusting && fuel > 0 {
@@ -330,15 +360,34 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else {
             fuelLabel.fontColor = .red
         }
+        
+        // Update timer display (show current time even when stopped)
+        timeLabel.text = String(format: "Time: %.1f s", currentGameTime)
+        
+        // Update color based on performance (only when running)
+        if isTimerRunning {
+            if currentGameTime < 8.0 {
+                timeLabel.fontColor = .green  // Fast time
+            } else if currentGameTime < 12.0 {
+                timeLabel.fontColor = .yellow // Average time
+            } else {
+                timeLabel.fontColor = .red    // Slow time
+            }
+        } else {
+            // When stopped, use white to indicate final time
+            timeLabel.fontColor = .white
+        }
     }
     
     private func checkGameState() {
         if lander.position.y < -100 {
-            gameOver(success: false, reason: "Crashed!")
+            stopTimer()
+            gameOver(success: false, reason: "💥 Crashed!")
         }
         
         if lander.position.x < -50 || lander.position.x > size.width + 50 {
-            gameOver(success: false, reason: "Lost in space!")
+            stopTimer()
+            gameOver(success: false, reason: "🚀 Lost in space!")
         }
         
         if fuel <= 0 && (isThrusting || isThustingLeft || isThustingRight) {
@@ -352,23 +401,87 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
-        guard let landerPhysics = lander.physicsBody else { return }
+        // Check if this collision involves the lander and the ground
+        var landerBody: SKPhysicsBody?
+        var groundBody: SKPhysicsBody?
         
-        let velocity = sqrt(pow(landerPhysics.velocity.dx, 2) + pow(landerPhysics.velocity.dy, 2))
+        if contact.bodyA.categoryBitMask == 0x1 << 0 { // lander
+            landerBody = contact.bodyA
+            groundBody = contact.bodyB
+        } else if contact.bodyB.categoryBitMask == 0x1 << 0 { // lander
+            landerBody = contact.bodyB
+            groundBody = contact.bodyA
+        }
+        
+        // Only process if this is a lander-ground collision
+        guard let lander = landerBody,
+              let ground = groundBody,
+              ground.categoryBitMask == 0x1 << 1 else {
+            print("Collision detected but not lander-ground collision")
+            return
+        }
+        
+        print("Lander-ground collision detected!")
+        
+        // Check if this is actually a proper landing (on top of ground, not side collision)
+        let landerBottom = self.lander.position.y - self.lander.size.height/2
+        let groundTop = self.ground.position.y + self.ground.size.height/2
+        let heightDifference = landerBottom - groundTop
+        
+        print("Lander bottom: \(landerBottom), Ground top: \(groundTop), Height diff: \(heightDifference)")
+        
+        // Only count as landing if lander is actually on top of ground (within reasonable tolerance)
+        if heightDifference > 10 {
+            print("Collision detected but lander is not on top of ground - ignoring")
+            return
+        }
+        
+        // Check if lander is within the horizontal bounds of the ground platform
+        let landerX = self.lander.position.x
+        let groundLeft = self.ground.position.x - self.ground.size.width/2
+        let groundRight = self.ground.position.x + self.ground.size.width/2
+        
+        print("Lander X: \(landerX), Ground left: \(groundLeft), Ground right: \(groundRight)")
+        
+        if landerX < groundLeft - 20 || landerX > groundRight + 20 {
+            print("Lander is outside ground platform bounds - not a valid landing")
+            return
+        }
+        
+        print("Valid landing confirmed!")
+        
+        // Stop the timer
+        stopTimer()
+        
+        let velocity = sqrt(pow(lander.velocity.dx, 2) + pow(lander.velocity.dy, 2))
         let velocityInMeters = velocity / 25.0
         
-        if velocityInMeters < 3.0 {
-            let landerX = lander.position.x
-            let targetMinX = targetLandingPosition - targetLandingWidth/2
-            let targetMaxX = targetLandingPosition + targetLandingWidth/2
+        // Check if lander is within target zone first
+        let targetMinX = targetLandingPosition - targetLandingWidth/2
+        let targetMaxX = targetLandingPosition + targetLandingWidth/2
+        
+        if landerX < targetMinX || landerX > targetMaxX {
+            // Outside target zone = crash regardless of velocity
+            gameOver(success: false, reason: "💥 Missed target zone!")
+            return
+        }
+        
+        // Within target zone - now check velocity
+        if velocityInMeters < 1.5 {
+            // Format landing time in milliseconds for display
+            let landingTimeMs = currentGameTime * 1000
+            let timeText = String(format: "%.0f ms", landingTimeMs)
             
-            if landerX >= targetMinX && landerX <= targetMaxX {
-                gameOver(success: true, reason: "Perfect Target Landing! 🎯")
+            // Check for new best time
+            let isNewRecord = checkAndUpdateBestTime(currentGameTime)
+            
+            if isNewRecord {
+                gameOver(success: true, reason: "🎯 NEW RECORD! Landing: \(timeText)")
             } else {
-                gameOver(success: true, reason: "Safe Landing!")
+                gameOver(success: true, reason: "🎯 Perfect Target Landing: \(timeText)")
             }
         } else {
-            gameOver(success: false, reason: "Crashed! Landing too fast!")
+            gameOver(success: false, reason: "💥 Crashed! Landing too fast!")
         }
     }
     
@@ -408,6 +521,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         gameStarted = false
         gamePaused = false
         
+        // Reset timer variables
+        gameStartTime = 0
+        currentGameTime = 0
+        isTimerRunning = false
+        
         setupScene()
         setupPhysics()
         setupLander()
@@ -415,6 +533,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupBackground()
         setupUI()
         setupParticles()
+        
+        // Start the timer immediately
+        startTimer()
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -428,8 +549,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         if !gamePaused && fuel > 0 {
-            gameStarted = true
-            
             let screenThird = size.width / 3.0
             
             if location.x < screenThird {
@@ -466,5 +585,58 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 thrusterFlame.run(repeatAnimation, withKey: "thrusterAnimation")
             }
         }
+    }
+    
+    private func updateBestTimeDisplay() {
+        let bestTime = getBestTime()
+        print("Updating best time display with: \(bestTime)")
+        if bestTime > 0 {
+            bestTimeLabel.text = String(format: "Best: %.1f s", bestTime)
+            bestTimeLabel.fontColor = .cyan
+            print("Display updated to: \(bestTimeLabel.text ?? "nil")")
+        } else {
+            bestTimeLabel.text = "Best: -- s"
+            bestTimeLabel.fontColor = .gray
+            print("Display shows no best time")
+        }
+    }
+    
+    private func getBestTime() -> TimeInterval {
+        let bestTime = UserDefaults.standard.double(forKey: highScoreKey)
+        print("Retrieved best time from UserDefaults: \(bestTime)")
+        return bestTime
+    }
+    
+    private func saveBestTime(_ time: TimeInterval) {
+        print("Saving best time to UserDefaults: \(time)")
+        UserDefaults.standard.set(time, forKey: highScoreKey)
+        UserDefaults.standard.synchronize()
+        
+        // Verify it was saved
+        let savedTime = UserDefaults.standard.double(forKey: highScoreKey)
+        print("Verified saved time: \(savedTime)")
+    }
+    
+    private func checkAndUpdateBestTime(_ landingTime: TimeInterval) -> Bool {
+        let currentBest = getBestTime()
+        print("Landing time: \(landingTime), Current best: \(currentBest)")
+        
+        if currentBest == 0 || landingTime < currentBest {
+            print("New record! Saving time: \(landingTime)")
+            saveBestTime(landingTime)
+            updateBestTimeDisplay()
+            return true // New record!
+        }
+        return false
+    }
+    
+    private func stopTimer() {
+        isTimerRunning = false
+    }
+    
+    private func startTimer() {
+        gameStartTime = CACurrentMediaTime()
+        isTimerRunning = true
+        gameStarted = true
     }
 } 
