@@ -15,6 +15,104 @@ import XMLCoder
 import WebKit
 import AVFoundation
 
+// Add HeadingViewModel class
+import CoreLocation
+import Combine
+
+class HeadingViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var heading: Double = 0.0
+    private let locationManager = CLLocationManager()
+
+    override init() {
+        super.init()
+        self.locationManager.delegate = self
+        self.locationManager.requestWhenInUseAuthorization() // Request permission
+        
+        // Check if heading is available
+        if CLLocationManager.headingAvailable() {
+            self.locationManager.startUpdatingHeading()
+        } else {
+            print("Device heading is not available.")
+            // Optionally, provide a default heading or an error state
+            // self.heading = -1 // Example to indicate unavailability
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        // Use magneticHeading for compass-like behavior
+        // trueHeading points to geographic North Pole, magneticHeading to magnetic North Pole
+        // Consider device orientation if you want the compass to always point "up" relative to the device screen
+        DispatchQueue.main.async {
+            self.heading = newHeading.magneticHeading
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager failed with error: \(error.localizedDescription)")
+        // Handle errors, e.g., by stopping updates or notifying the user
+    }
+    
+    // It's good practice to stop updates when they're no longer needed,
+    // though for a persistent compass, you might not call this often.
+    deinit {
+        self.locationManager.stopUpdatingHeading()
+    }
+}
+
+// Add CompassView struct
+struct CompassView: View {
+    @ObservedObject var viewModel: HeadingViewModel
+    let compassSize: CGFloat = 80 // Increased size for better readability
+
+    var body: some View {
+        ZStack {
+            // Background circle
+            Circle()
+                .fill(Color.gray.opacity(0.2))
+                .shadow(radius: 3)
+
+            // Static Cardinal Directions
+            Text("N")
+                .font(.caption.bold())
+                .foregroundColor(.black)
+                .offset(y: -compassSize / 2.5)
+            Text("S")
+                .font(.caption.bold())
+                .foregroundColor(.black)
+                .offset(y: compassSize / 2.5)
+            Text("E")
+                .font(.caption.bold())
+                .foregroundColor(.black)
+                .offset(x: compassSize / 2.5)
+            Text("W")
+                .font(.caption.bold())
+                .foregroundColor(.black)
+                .offset(x: -compassSize / 2.5)
+
+            // Rotating Needle
+            Image(systemName: "arrowtriangle.up.fill") // A simple arrow for North
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: compassSize * 0.2, height: compassSize * 0.4)
+                .foregroundColor(.red) // Red for North part of needle
+                .offset(y: -compassSize * 0.15) // Adjust position to pivot correctly
+                .rotationEffect(.degrees(viewModel.heading)) // Corrected rotation
+
+            // Optional: Smaller arrow for the South end of the needle
+            Image(systemName: "arrowtriangle.down.fill")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: compassSize * 0.2, height: compassSize * 0.4)
+                .foregroundColor(.gray) // Gray for South part of needle
+                .offset(y: compassSize * 0.15) // Adjust position
+                .rotationEffect(.degrees(viewModel.heading)) // Corrected rotation
+
+
+        }
+        .frame(width: compassSize, height: compassSize)
+    }
+}
+
 struct POI: Equatable {
     let coordinate: CLLocationCoordinate2D
     let title: String
@@ -612,6 +710,8 @@ struct ContentView: View {
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false
     @State private var showWelcomeView: Bool = false
 
+    @StateObject private var headingViewModel = HeadingViewModel()
+
     let pois = loadPOIsFromXML()
     let routes = loadRoutesFromXML()
     
@@ -763,6 +863,17 @@ struct ContentView: View {
                         selectedPOI = nil
                         showPOIPopup = false
                     }
+            }
+            
+            // Add CompassView to the bottom-right corner
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    CompassView(viewModel: headingViewModel)
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
+                }
             }
         }
         .fullScreenCover(isPresented: $showPOIPopup, onDismiss: {

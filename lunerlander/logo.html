@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Lander Logo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .logo-container {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+        }
+        
+        .export-info {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+            <!-- Space background with gradient -->
+            <defs>
+                <radialGradient id="spaceGradient" cx="50%" cy="30%" r="60%">
+                    <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#16213e;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#0f0f23;stop-opacity:1" />
+                </radialGradient>
+                
+                <linearGradient id="landerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#e0e0e0;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#c0c0c0;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#a0a0a0;stop-opacity:1" />
+                </linearGradient>
+                
+                <linearGradient id="flameGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff6600;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#ff3300;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#cc0000;stop-opacity:1" />
+                </linearGradient>
+                
+                <linearGradient id="moonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#d0d0d0;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#808080;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            
+            <!-- Background -->
+            <rect width="1024" height="1024" fill="url(#spaceGradient)"/>
+            
+            <!-- Stars -->
+            <circle cx="150" cy="180" r="2" fill="white" opacity="0.8"/>
+            <circle cx="890" cy="120" r="1.5" fill="white" opacity="0.9"/>
+            <circle cx="750" cy="200" r="1" fill="white" opacity="0.7"/>
+            <circle cx="200" cy="350" r="1.5" fill="white" opacity="0.8"/>
+            <circle cx="850" cy="300" r="2" fill="white" opacity="0.9"/>
+            <circle cx="100" cy="500" r="1" fill="white" opacity="0.6"/>
+            <circle cx="950" cy="450" r="1.5" fill="white" opacity="0.8"/>
+            <circle cx="300" cy="150" r="1" fill="white" opacity="0.7"/>
+            <circle cx="600" cy="100" r="2" fill="white" opacity="0.9"/>
+            <circle cx="450" cy="250" r="1" fill="white" opacity="0.6"/>
+            
+            <!-- Moon surface at bottom -->
+            <ellipse cx="512" cy="950" rx="600" ry="120" fill="url(#moonGradient)" opacity="0.8"/>
+            
+            <!-- Craters on moon -->
+            <ellipse cx="300" cy="900" rx="40" ry="15" fill="#606060" opacity="0.6"/>
+            <ellipse cx="700" cy="920" rx="25" ry="10" fill="#606060" opacity="0.6"/>
+            <ellipse cx="500" cy="930" rx="30" ry="12" fill="#606060" opacity="0.6"/>
+            
+            <!-- Main lander body (triangular spacecraft) -->
+            <g transform="translate(512, 400) scale(1.5)">
+                <!-- Lander main body -->
+                <polygon points="0,-80 -60,60 60,60" fill="url(#landerGradient)" stroke="white" stroke-width="3"/>
+                
+                <!-- Landing legs -->
+                <line x1="-45" y1="40" x2="-80" y2="90" stroke="#666" stroke-width="6" stroke-linecap="round"/>
+                <line x1="45" y1="40" x2="80" y2="90" stroke="#666" stroke-width="6" stroke-linecap="round"/>
+                
+                <!-- Landing pads -->
+                <circle cx="-80" cy="90" r="8" fill="#444"/>
+                <circle cx="80" cy="90" r="8" fill="#444"/>
+                
+                <!-- Cockpit window -->
+                <circle cx="0" cy="-20" r="25" fill="#00ccff" stroke="white" stroke-width="2" opacity="0.8"/>
+                <circle cx="0" cy="-20" r="20" fill="#0099cc" opacity="0.6"/>
+                
+                <!-- Antenna -->
+                <line x1="0" y1="-80" x2="0" y2="-110" stroke="white" stroke-width="2"/>
+                <circle cx="0" cy="-110" r="4" fill="#ff6600"/>
+                
+                <!-- Side thrusters -->
+                <rect x="-70" y="0" width="8" height="15" fill="#333"/>
+                <rect x="62" y="0" width="8" height="15" fill="#333"/>
+                
+                <!-- Main thruster flame -->
+                <polygon points="0,60 -25,120 0,160 25,120" fill="url(#flameGradient)" opacity="0.9"/>
+                <polygon points="0,70 -15,110 0,140 15,110" fill="#ffaa00" opacity="0.8"/>
+                <polygon points="0,80 -8,100 0,120 8,100" fill="#ffff00" opacity="0.9"/>
+                
+                <!-- Side thruster flames -->
+                <polygon points="-70,7 -110,0 -130,7 -110,14" fill="url(#flameGradient)" opacity="0.7"/>
+                <polygon points="70,7 110,0 130,7 110,14" fill="url(#flameGradient)" opacity="0.7"/>
+            </g>
+            
+            <!-- Title text -->
+            <text x="512" y="150" font-family="Arial, sans-serif" font-size="96" font-weight="bold" 
+                  text-anchor="middle" fill="white" stroke="#00ccff" stroke-width="2">
+                LUNAR
+            </text>
+            <text x="512" y="260" font-family="Arial, sans-serif" font-size="96" font-weight="bold" 
+                  text-anchor="middle" fill="white" stroke="#00ccff" stroke-width="2">
+                LANDER
+            </text>
+            
+            <!-- Decorative elements -->
+            <circle cx="512" cy="512" r="500" fill="none" stroke="#00ccff" stroke-width="2" opacity="0.3"/>
+            <circle cx="512" cy="512" r="480" fill="none" stroke="#00ccff" stroke-width="1" opacity="0.2"/>
+        </svg>
+        
+        <div class="export-info">
+            <p>Right-click on the logo above and "Save Image As" to export as PNG</p>
+            <p>Or use browser developer tools to save the SVG</p>
+        </div>
+    </div>
+</body>
+</html> 
