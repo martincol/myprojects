@@ -39,11 +39,42 @@ class HeadingViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        // Use magneticHeading for compass-like behavior
-        // trueHeading points to geographic North Pole, magneticHeading to magnetic North Pole
-        // Consider device orientation if you want the compass to always point "up" relative to the device screen
+        // Get the current interface orientation
+        // Ensure we are on the main thread to access UI-related properties safely
         DispatchQueue.main.async {
-            self.heading = newHeading.magneticHeading
+            var interfaceOrientation: UIInterfaceOrientation = .unknown
+            // Access the active window scene to get orientation
+            if let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                interfaceOrientation = windowScene.interfaceOrientation
+            }
+
+            var headingToUse = newHeading.magneticHeading
+
+            // Adjust heading based on interface orientation
+            switch interfaceOrientation {
+            case .landscapeLeft:
+                headingToUse += 90.0
+            case .landscapeRight:
+                headingToUse -= 90.0
+            case .portraitUpsideDown:
+                headingToUse += 180.0
+            case .portrait, .unknown: // Assuming portrait is the default or fallback
+                break // No adjustment needed
+            @unknown default:
+                break // No adjustment needed
+            }
+
+            // Normalize heading to 0-359.9 degrees
+            headingToUse = fmod(headingToUse, 360.0)
+            if headingToUse < 0 {
+                headingToUse += 360.0
+            }
+            
+            // Only update if the change is significant (e.g., more than 1 degree)
+            // This can help reduce rapid updates for very minor heading fluctuations.
+            if abs(self.heading - headingToUse) > 1.0 || (self.heading == 0.0 && headingToUse != 0.0) {
+                self.heading = headingToUse
+            }
         }
     }
 
@@ -195,7 +226,7 @@ struct GPX: Codable {
     }
 }
 
-struct Route: Codable {
+struct Route: Codable, Equatable {
     let name: String
     let description: String
     let gpxFileName: String
@@ -1066,50 +1097,97 @@ struct MapView: UIViewRepresentable {
     }
     
     func updateUIView(_ view: MKMapView, context: Context) {
-        if shouldUpdateRegion {
-            view.setRegion(region, animated: true)
-            DispatchQueue.main.async {
-                self.shouldUpdateRegion = false
+        print("MapView.updateUIView called")
+
+        var workDone = false // Flag to track if any actual map update was performed
+
+        // Region Update Check
+        if context.coordinator.previousRegion != region || !shouldUpdateRegion { // always update if shouldUpdateRegion is true from POI list tap
+            if shouldUpdateRegion {
+                print("  Updating region due to shouldUpdateRegion flag")
+                view.setRegion(region, animated: true)
+                DispatchQueue.main.async {
+                    self.shouldUpdateRegion = false // Reset the flag
+                }
+                workDone = true
+            } else if context.coordinator.previousRegion != region {
+                 print("  Updating region due to region change")
+                 view.setRegion(region, animated: true)
+                 workDone = true
             }
         }
-        
-        view.mapType = mapType
-        
-        // Clear existing route-specific annotations and overlays first
-        view.removeOverlays(view.overlays.filter { $0 is MKPolyline })
-        let routeAnnotations = view.annotations.filter { annotation in
-            return annotation is DirectionalArrowAnnotation ||
-                   (annotation as? MKPointAnnotation)?.title?.hasPrefix("Start:") == true
+        context.coordinator.previousRegion = region
+
+        // MapType Update Check
+        if context.coordinator.previousMapType != mapType {
+            print("  Updating mapType")
+            view.mapType = mapType
+            context.coordinator.previousMapType = mapType
+            workDone = true
         }
-        view.removeAnnotations(routeAnnotations)
-        
-        // Update POI annotations using filteredPOIs
-        // Remove only POI annotations before adding new ones to avoid flicker/duplication
-        let poiAnnotations = view.annotations.filter { annotation in
-            // Check if it's a POI annotation (not user location, not route start, not arrow)
-            return !(annotation is MKUserLocation) &&
-                   !((annotation as? MKPointAnnotation)?.title?.hasPrefix("Start:") == true) &&
-                   !(annotation is DirectionalArrowAnnotation)
+
+        // SelectedRoute Update Check (handles nil for route removal)
+        let currentSelectedRoute = selectedRoute // Capture for consistent comparison
+        let previousSelectedRouteWasNil = context.coordinator.previousSelectedRoute == .some(nil) // previous was explicitly nil
+        let currentSelectedRouteIsNil = currentSelectedRoute == nil
+
+        if context.coordinator.previousSelectedRoute == nil || // First time, or previous was nil from start
+           (previousSelectedRouteWasNil && !currentSelectedRouteIsNil) || // Was nil, now has a route
+           (!previousSelectedRouteWasNil && currentSelectedRouteIsNil) || // Had a route, now is nil
+           (context.coordinator.previousSelectedRoute != .some(currentSelectedRoute)) { // Both have/had routes, check if different
+            
+            print("  Updating route or route presence changed.")
+            view.removeOverlays(view.overlays.filter { $0 is MKPolyline })
+            let routeAnnotations = view.annotations.filter { annotation in
+                return annotation is DirectionalArrowAnnotation ||
+                       (annotation as? MKPointAnnotation)?.title?.hasPrefix("Start:") == true
+            }
+            view.removeAnnotations(routeAnnotations)
+
+            if let route = currentSelectedRoute {
+                loadAndDisplayRoute(route, on: view)
+            }
+            context.coordinator.previousSelectedRoute = .some(currentSelectedRoute)
+            workDone = true
         }
-        view.removeAnnotations(poiAnnotations)
         
-        let newPoiAnnotations = filteredPOIs.map { poi -> MKPointAnnotation in
-            let annotation = MKPointAnnotation()
-            annotation.coordinate = poi.coordinate
-            annotation.title = poi.title
-            return annotation
+        // FilteredPOIs Update Check
+        if context.coordinator.previousFilteredPOIs != filteredPOIs {
+            print("  Updating filteredPOIs")
+            // Remove only POI annotations before adding new ones
+            let poiAnnotations = view.annotations.filter { annotation in
+                return !(annotation is MKUserLocation) &&
+                       !((annotation as? MKPointAnnotation)?.title?.hasPrefix("Start:") == true) &&
+                       !(annotation is DirectionalArrowAnnotation)
+            }
+            view.removeAnnotations(poiAnnotations)
+            
+            let newPoiAnnotations = filteredPOIs.map { poi -> MKPointAnnotation in
+                let annotation = MKPointAnnotation()
+                annotation.coordinate = poi.coordinate
+                annotation.title = poi.title
+                return annotation
+            }
+            view.addAnnotations(newPoiAnnotations)
+            context.coordinator.previousFilteredPOIs = filteredPOIs
+            workDone = true
         }
-        view.addAnnotations(newPoiAnnotations)
-        
-        // Update route overlay if selected
-        if let route = selectedRoute {
-            loadAndDisplayRoute(route, on: view)
+
+        if !workDone {
+            print("  MapView.updateUIView: No relevant changes detected, map updates skipped.")
         }
     }
     
-    class Coordinator: NSObject, MKMapViewDelegate, CLLocationManagerDelegate {
+    class Coordinator: NSObject, ObservableObject, MKMapViewDelegate, CLLocationManagerDelegate {
         var parent: MapView
         private let locationManager = CLLocationManager()
+        @Published var heading: Double = 0.0
+        
+        // Store previous values
+        var previousRegion: MKCoordinateRegion?
+        var previousMapType: MKMapType?
+        var previousSelectedRoute: Route?? // Double optional to distinguish nil route from never set
+        var previousFilteredPOIs: [POI]?
         
         init(_ parent: MapView) {
             self.parent = parent
@@ -1410,26 +1488,6 @@ func latLonToTile(lat: Double, lon: Double, zoom: Int) -> (x: Int, y: Int) {
 
 // func downloadTile(x: Int, y: Int, zoom: Int) {
 //     print("\(zoom),\(x),\(y)")
-// }
-
-// Helper to split a CSV line, handling quoted fields
-// func splitCSVLine(_ line: String) -> [String] {
-//     var results: [String] = []
-//     var value = ""
-//     var insideQuotes = false
-//     var iterator = line.makeIterator()
-//     while let char = iterator.next() {
-//         if char == "\"" {
-//             insideQuotes.toggle()
-//         } else if char == "," && !insideQuotes {
-//             results.append(value)
-//             value = ""
-//         } else {
-//             value.append(char)
-//         }
-//     }
-//     results.append(value)
-//     return results.map { $0.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "") }
 // }
 
 // Update loadPOIsFromXML with better error handling
@@ -1747,6 +1805,19 @@ struct RoutePickerView: View {
         }
     }
 }
+
+// Make MKCoordinateRegion Equatable for comparison
+extension MKCoordinateRegion: Equatable {
+    public static func == (lhs: MKCoordinateRegion, rhs: MKCoordinateRegion) -> Bool {
+        return lhs.center.latitude == rhs.center.latitude &&
+               lhs.center.longitude == rhs.center.longitude &&
+               lhs.span.latitudeDelta == rhs.span.latitudeDelta &&
+               lhs.span.longitudeDelta == rhs.span.longitudeDelta
+    }
+}
+
+// Make MKMapType Equatable (it's a UInt, inherently Equatable, but explicit conformance can be clearer if ever needed for other contexts)
+// extension MKMapType: Equatable {} // Not strictly necessary as UInt is Equatable
 
 #Preview {
     ContentView()
