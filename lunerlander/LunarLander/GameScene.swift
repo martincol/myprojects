@@ -33,6 +33,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var timeLabel: SKLabelNode!
     private var bestTimeLabel: SKLabelNode!
     private var instructionLabel: SKLabelNode!
+    private var startGameButton: SKLabelNode!
+    private var detailedInstructionLabel: SKLabelNode!
     
     // Game state
     private var fuel: CGFloat = 50.0
@@ -44,6 +46,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var currentGameTime: TimeInterval = 0
     private var isTimerRunning = false
     private let highScoreKey = "LunarLanderBestTime"
+    private let hasLaunchedBeforeKey = "hasLaunchedBefore"
     
     override func didMove(to view: SKView) {
         setupScene()
@@ -54,8 +57,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupUI()
         setupParticles()
         
-        // Start the timer immediately
-        startTimer()
+        let hasLaunchedBefore = UserDefaults.standard.bool(forKey: hasLaunchedBeforeKey)
+        
+        if !hasLaunchedBefore {
+            // First launch
+            lander.physicsBody?.isDynamic = false // Keep lander static
+            displayStartButton() // Create and show the start button
+            UserDefaults.standard.set(true, forKey: hasLaunchedBeforeKey)
+        } else {
+            // Subsequent launches: Start game directly
+            initiateGameStartSequence()
+        }
     }
     
     private func setupScene() {
@@ -71,6 +83,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         print("Using ultra-gentle gravity: \(gravity)")
         print("Thruster force: \(thrusterForce)")
         print("Target landing position: \(targetLandingPosition)")
+        
+        // Start the timer immediately
+        // startTimer()
     }
     
     private func setupPhysics() {
@@ -222,50 +237,53 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         velocityLabel = SKLabelNode(fontNamed: "Arial")
         velocityLabel.fontSize = 16
         velocityLabel.fontColor = .white
-        velocityLabel.position = CGPoint(x: 60, y: size.height - 40)
+        velocityLabel.position = CGPoint(x: 70, y: size.height - 65)
         velocityLabel.text = "Velocity: 0.0 m/s"
         addChild(velocityLabel)
         
         altitudeLabel = SKLabelNode(fontNamed: "Arial")
         altitudeLabel.fontSize = 16
         altitudeLabel.fontColor = .white
-        altitudeLabel.position = CGPoint(x: 60, y: size.height - 65)
+        altitudeLabel.position = CGPoint(x: 70, y: size.height - 90)
         altitudeLabel.text = "Altitude: 0 m"
         addChild(altitudeLabel)
         
         fuelLabel = SKLabelNode(fontNamed: "Arial")
         fuelLabel.fontSize = 16
         fuelLabel.fontColor = .green
-        fuelLabel.position = CGPoint(x: 60, y: size.height - 90)
+        fuelLabel.position = CGPoint(x: 70, y: size.height - 115)
         fuelLabel.text = "Fuel: 100%"
         addChild(fuelLabel)
         
         timeLabel = SKLabelNode(fontNamed: "Arial")
         timeLabel.fontSize = 16
         timeLabel.fontColor = .white
-        timeLabel.position = CGPoint(x: 60, y: size.height - 115)
+        timeLabel.position = CGPoint(x: 70, y: size.height - 140)
         timeLabel.text = "Time: 0.0 s"
         addChild(timeLabel)
         
         bestTimeLabel = SKLabelNode(fontNamed: "Arial")
         bestTimeLabel.fontSize = 16
         bestTimeLabel.fontColor = .white
-        bestTimeLabel.position = CGPoint(x: 60, y: size.height - 140)
+        bestTimeLabel.position = CGPoint(x: 70, y: size.height - 165)
         updateBestTimeDisplay()
         addChild(bestTimeLabel)
         
         instructionLabel = SKLabelNode(fontNamed: "Arial")
         instructionLabel.fontSize = 18
         instructionLabel.fontColor = .yellow
-        instructionLabel.position = CGPoint(x: size.width * 0.5, y: size.height * 0.5)
+        instructionLabel.position = CGPoint(x: size.width * 0.5, y: (size.height * 0.5) + 50)
         instructionLabel.text = "Left/Right: Horizontal • Center: Vertical"
+        instructionLabel.isHidden = true
         addChild(instructionLabel)
         
-        let wait = SKAction.wait(forDuration: 3.0)
+        let wait = SKAction.wait(forDuration: 1.0)
         let fadeOut = SKAction.fadeOut(withDuration: 1.0)
         let remove = SKAction.removeFromParent()
         let sequence = SKAction.sequence([wait, fadeOut, remove])
-        instructionLabel.run(sequence)
+        // instructionLabel.run(sequence) // Will run after game starts
+
+        // startGameButton creation is moved to displayStartButton()
     }
     
     private func setupParticles() {
@@ -273,6 +291,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if !gameStarted { // Don't do anything if game hasn't started
+            return
+        }
         isThrusting = false
         isThustingLeft = false
         isThustingRight = false
@@ -295,6 +316,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func update(_ currentTime: TimeInterval) {
         guard let landerPhysics = lander.physicsBody else { return }
+        
+        if !gameStarted { // Don't update if game hasn't started
+            return
+        }
         
         // Update current game time
         if isTimerRunning {
@@ -478,7 +503,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if isNewRecord {
                 gameOver(success: true, reason: "🎯 NEW RECORD! Landing: \(timeText)")
             } else {
-                gameOver(success: true, reason: "🎯 Perfect Target Landing: \(timeText)")
+                gameOver(success: true, reason: "🎯 Perfect Landing: \(timeText)")
             }
         } else {
             gameOver(success: false, reason: "💥 Crashed! Landing too fast!")
@@ -488,9 +513,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func gameOver(success: Bool, reason: String) {
         gamePaused = true
         lander.physicsBody?.isDynamic = false
+        stopTimer() // Ensure timer stops at game over
         
         let gameOverLabel = SKLabelNode(fontNamed: "Arial")
-        gameOverLabel.fontSize = 24
+        gameOverLabel.fontSize = 20
         gameOverLabel.fontColor = success ? .green : .red
         gameOverLabel.position = CGPoint(x: size.width * 0.5, y: size.height * 0.6)
         gameOverLabel.text = reason
@@ -518,8 +544,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         isThrusting = false
         isThustingLeft = false
         isThustingRight = false
-        gameStarted = false
+        gameStarted = false 
         gamePaused = false
+        // Remove references to ensure they are recreated if needed
+        startGameButton = nil
+        detailedInstructionLabel = nil
         
         // Reset timer variables
         gameStartTime = 0
@@ -534,8 +563,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupUI()
         setupParticles()
         
-        // Start the timer immediately
-        startTimer()
+        // Start the game directly on restart, without the button
+        initiateGameStartSequence()
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -546,6 +575,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if touchedNode.name == "restart" && !gamePaused {
             restartGame()
             return
+        }
+
+        if !gameStarted {
+            if touchedNode.name == "startGameButton" {
+                startGameButton.removeFromParent()
+                if detailedInstructionLabel != nil {
+                    detailedInstructionLabel.removeFromParent()
+                }
+                initiateGameStartSequence()
+            }
+            return // Don't process other touches if game hasn't started (or button not pressed)
         }
         
         if !gamePaused && fuel > 0 {
@@ -637,6 +677,41 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func startTimer() {
         gameStartTime = CACurrentMediaTime()
         isTimerRunning = true
-        gameStarted = true
+        gameStarted = true // Set gameStarted to true here
+    }
+    
+    // New function to display the start button
+    private func displayStartButton() {
+        startGameButton = SKLabelNode(fontNamed: "Arial")
+        startGameButton.fontSize = 22
+        startGameButton.fontColor = .yellow
+        startGameButton.position = CGPoint(x: size.width * 0.5, y: size.height * 0.5 + 60) // Adjusted y for new label
+        startGameButton.text = "Tap to Start" // User updated this text
+        startGameButton.name = "startGameButton"
+        addChild(startGameButton)
+
+        detailedInstructionLabel = SKLabelNode(fontNamed: "Arial")
+        detailedInstructionLabel.fontSize = 14
+        detailedInstructionLabel.fontColor = .white
+        detailedInstructionLabel.position = CGPoint(x: size.width * 0.5, y: startGameButton.position.y - 100) // Position below start button
+        detailedInstructionLabel.text = "Land the spaceship on the green pad but don't come in too quick. Tap middle of screen to fire main thruster. Tap left to fire right thruster and tap right to fire left thruster."
+        detailedInstructionLabel.numberOfLines = 0 // Enable wrapping
+        detailedInstructionLabel.preferredMaxLayoutWidth = size.width - 40 // Wrap width with some padding
+        detailedInstructionLabel.name = "detailedInstructionLabel"
+        addChild(detailedInstructionLabel)
+    }
+    
+    // New function to initiate the game start sequence
+    private func initiateGameStartSequence() {
+        lander.physicsBody?.isDynamic = true
+        startTimer() // gameStarted is set to true in startTimer()
+
+        // Show instructions now
+        instructionLabel.isHidden = false // Ensure label is visible before running sequence
+        let wait = SKAction.wait(forDuration: 1.0)
+        let fadeOut = SKAction.fadeOut(withDuration: 1.0)
+        let remove = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([wait, fadeOut, remove])
+        instructionLabel.run(sequence)
     }
 } 
